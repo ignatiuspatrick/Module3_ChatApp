@@ -18,6 +18,7 @@ public class RoutingProtocol implements Runnable {
 	private final InetAddress group;
 	private byte seq = 1;
 	private byte id;
+	private byte ack;
 	
 	String ip = "224.0.1.46";
 	int port = 2301;
@@ -40,6 +41,26 @@ public class RoutingProtocol implements Runnable {
 		socket.joinGroup(group);
 		Thread n = new Thread(this);
 		n.start();
+	}
+	
+	public class Ping implements Runnable {
+		
+		private MulticastSocket ms;
+		private byte compid;
+		
+		public Ping() {
+			 try {
+				ms = new MulticastSocket(port);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		public void run() {
+			
+			
+		}
 	}
 	
 	public void scan() {
@@ -80,8 +101,20 @@ public class RoutingProtocol implements Runnable {
 	
 	public void receiveMessage(byte[] recb) {
 		System.out.println("message received");
+		sendAck();
 	}
 	
+	private void sendAck() {
+		byte[] b = new byte[] {this.id};
+		DatagramPacket snd = new DatagramPacket(b, b.length, group, port);
+		try {
+			socket.send(snd);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+
 	public void relayMessage(byte[] message) {
 		Byte[] bts = users.get(message[0]);
 		if ((bts[0].byteValue() + 1) % 200 == message[1] % 200 || bts[0].byteValue() % 200 == message[1] % 200 && bts[1].byteValue() < message[2]) {
@@ -99,7 +132,8 @@ public class RoutingProtocol implements Runnable {
 	
 	public void outMessage(byte[] message) {
 		//seq += 1;
-		byte[] b = new byte[] {id, seq, 0};
+		// 0 to implement
+		byte[] b = new byte[] {id, seq, 0, ack};
 		byte[] out = new byte[message.length + b.length];
 		System.arraycopy(b, 0, out, 0, b.length);
 		System.arraycopy(message, 0, out, b.length, message.length);
