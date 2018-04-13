@@ -15,10 +15,10 @@ public class RoutingProtocol implements Runnable {
 
 	private final MulticastSocket socket;
 	private final InetAddress group;
-	private byte seq = 1;
+	private byte seq = 0;
 	private byte id;
-	private byte ack;
 	private ReentrantLock lock;
+	private byte specseq = 0;
 
 	String ip = "228.133.202.100";
 	int port = 2301;
@@ -29,7 +29,7 @@ public class RoutingProtocol implements Runnable {
 
 	public static void main(String[] args) {
 		try {
-			RoutingProtocol o = new RoutingProtocol((byte) 3);
+			RoutingProtocol o = new RoutingProtocol((byte) 2);
 			o.scan();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -46,26 +46,6 @@ public class RoutingProtocol implements Runnable {
 		n.start();
 		Thread ping = new Thread(new PingThread(this));
 		ping.start();
-	}
-	//hello
-
-	public class Ping implements Runnable {
-
-		private MulticastSocket ms;
-		private byte compid;
-
-		public Ping() {
-			try {
-				ms = new MulticastSocket(port);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		@Override
-		public void run() {
-
-		}
 	}
 
 	public void scan() {
@@ -88,21 +68,22 @@ public class RoutingProtocol implements Runnable {
 					e.printStackTrace();
 				}
 				recb = rec.getData();
-				// System.out.println("Message Received from: " + recb[0]);
+				//System.out.println("Message Received from: " + recb[0]);
 			} while (recb[0] == id);
 			//
 			// System.out.println("Message Received from: " + recb[0] + " " + recb[1] + " "
 			// + recb[2] + " " + recb[3]);
+			
 			// Ping from other computers.
 			if (recb[3] == -2) {
 				if (!users.containsKey(recb[0]) || !pingmap.containsKey(recb[0])) {
-					users.put(recb[0], new Byte[] { recb[1], recb[2] });
+					users.put(recb[0], new Byte[] { recb[1], recb[2] , -1});
 					relayMessage(recb);
 				}
 				pingmap.put(recb[0], (byte) 5);
 				Byte[] bts = users.get(recb[0]);
 				if (bts != null) {
-					if ((bts[0].byteValue() + 1) % 100 == recb[1] % 100) {
+					if ((bts[2].byteValue()) != recb[2]) {
 						relayMessage(recb);
 					}
 				}
@@ -110,9 +91,10 @@ public class RoutingProtocol implements Runnable {
 
 			// Normal messages.
 			if (recb[3] == -1) {
-
+				//if (users.containsKey(recb[0])) {
 				// System.out.println(pingmap.containsKey(recb[0]) + " " +
 				// (users.get(recb[0])[0] + 1) % 100 + " " + recb[1] % 100);
+				//}
 				if ((pingmap.containsKey(recb[0]) && (users.get(recb[0])[0] + 1) % 100 == recb[1] % 100)) {
 					receiveMessage(recb);
 				}
@@ -125,8 +107,9 @@ public class RoutingProtocol implements Runnable {
 				}
 			}
 
+			//acks
 			if (recb[3] >= 0) {
-				if ((users.get(recb[0])[0].byteValue() + 1) % 100 == recb[1] % 100) {
+				if (users.get(recb[0])[2].byteValue() != recb[2]) {
 					relayMessage(recb);
 				}
 
@@ -142,24 +125,17 @@ public class RoutingProtocol implements Runnable {
 	// When a new message is received.
 	public void receiveMessage(byte[] recb) {
 		System.out.println("message received");
-		sendAck();
-	}
-
-	private void sendAck() {
-		byte[] b = new byte[] { this.id };
-		DatagramPacket snd = new DatagramPacket(b, b.length, group, port);
-		try {
-			socket.send(snd);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
 	}
 
 	public void relayMessage(byte[] message) {
 		Byte[] bts = users.get(message[0]);
 		bts[0] = message[1];
-		bts[1] = message[2];
+		if (message[3] != -1) {
+			bts[2] = message[2];
+		} else {
+			bts[1] = message[2];
+		}
+		
 		DatagramPacket snd = new DatagramPacket(message, message.length, group, port);
 		try {
 			socket.send(snd);
@@ -202,12 +178,21 @@ public class RoutingProtocol implements Runnable {
 		}
 		return seq;
 	}
+	
+	// to the next sequence number
+	public byte nextSpecSeq() {
+		specseq++;
+		if (specseq == 100) {
+			specseq = 0;
+		}
+		return specseq;
+	}
 
 	// send acks for received messages.
 	public void sendAck(byte ack, byte ackid) {
 		lock.lock();
 		try {
-			byte[] b = new byte[] { id, nextSeq(), 0, ack, ackid };
+			byte[] b = new byte[] { id, seq, nextSpecSeq(), ack, ackid };
 			DatagramPacket snd = new DatagramPacket(b, b.length, group, port);
 			try {
 				socket.send(snd);
@@ -222,7 +207,7 @@ public class RoutingProtocol implements Runnable {
 	public void sendPing() {
 		lock.lock();
 		try {
-			byte[] b = new byte[] { id, nextSeq(), 0, -2, -2 };
+			byte[] b = new byte[] { id, seq, nextSpecSeq(), -2, -2 };
 			DatagramPacket snd = new DatagramPacket(b, b.length, group, port);
 			try {
 				socket.send(snd);
