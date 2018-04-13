@@ -20,7 +20,7 @@ public class RoutingProtocol implements Runnable {
 	private byte ack;
 	private ReentrantLock lock;
 
-	String ip = "224.0.1.46";
+	String ip = "228.133.202.88";
 	int port = 2301;
 
 	private Map<Byte, Byte[]> users = new HashMap<>();
@@ -29,7 +29,7 @@ public class RoutingProtocol implements Runnable {
 
 	public static void main(String[] args) {
 		try {
-			RoutingProtocol o = new RoutingProtocol((byte) 6);
+			RoutingProtocol o = new RoutingProtocol((byte) 200);
 			o.scan();
 		} catch (IOException e) {
 			e.printStackTrace();
