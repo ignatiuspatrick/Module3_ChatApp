@@ -11,13 +11,13 @@ public class PingThread implements Runnable {
 	@Override
 	public void run() {
 		while (true) {
+			routing.pingTick();
+			routing.sendPing();
 			try {
-				Thread.sleep(3000);
+				Thread.sleep(00);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			routing.pingTick();
-			routing.sendPing();
 		}
 	}
 

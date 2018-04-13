@@ -133,6 +133,8 @@ public class RoutingProtocol implements Runnable {
 		byte[] plaintext = new byte[recb.length-HEADER_LENGTH];
 		System.arraycopy(recb, HEADER_LENGTH, plaintext, 0, recb.length-HEADER_LENGTH);
 		System.out.println(new String(plaintext));
+		System.out.println(plaintext.toString());
+		System.out.println(new String(recb));
 	}
 
 	public void relayMessage(byte[] message) {
@@ -143,7 +145,7 @@ public class RoutingProtocol implements Runnable {
 		} else {
 			bts[1] = message[2];
 		}
-		
+		users.put(message[0], new byte[] {bts[0], bts[1], bts[2]});
 		DatagramPacket snd = new DatagramPacket(message, message.length, group, port);
 		try {
 			socket.send(snd);
