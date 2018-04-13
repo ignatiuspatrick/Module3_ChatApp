@@ -19,12 +19,13 @@ public class RoutingProtocol implements Runnable {
 	private byte id;
 	private ReentrantLock lock;
 	private byte specseq = 0;
+	private static int HEADER_LENGTH = 5;
 
 	String ip = "228.133.202.100";
 	int port = 2301;
 
-	private Map<Byte, Byte[]> users = new HashMap<>();
-	private Map<Byte, Byte> pingmap = new HashMap<>();
+	private Map<Byte, Byte[]> users;
+	private Map<Byte, Byte> pingmap;
 	private Map<Byte, Boolean> ackmap;
 
 	public static void main(String[] args) {
@@ -37,6 +38,8 @@ public class RoutingProtocol implements Runnable {
 	}
 
 	public RoutingProtocol(byte i) throws IOException {
+		users = new HashMap<>();
+		pingmap = new HashMap<>();
 		lock = new ReentrantLock();
 		id = i;
 		group = InetAddress.getByName(ip);
@@ -91,10 +94,10 @@ public class RoutingProtocol implements Runnable {
 
 			// Normal messages.
 			if (recb[3] == -1) {
-				//if (users.containsKey(recb[0])) {
-				// System.out.println(pingmap.containsKey(recb[0]) + " " +
-				// (users.get(recb[0])[0] + 1) % 100 + " " + recb[1] % 100);
-				//}
+				if (users.containsKey(recb[0])) {
+				 System.out.println(pingmap.containsKey(recb[0]) + " " +
+				 (users.get(recb[0])[0] + 1) % 100 + " " + recb[1] % 100);
+				}
 				if ((pingmap.containsKey(recb[0]) && (users.get(recb[0])[0] + 1) % 100 == recb[1] % 100)) {
 					receiveMessage(recb);
 				}
@@ -109,8 +112,10 @@ public class RoutingProtocol implements Runnable {
 
 			//acks
 			if (recb[3] >= 0) {
-				if (users.get(recb[0])[2].byteValue() != recb[2]) {
-					relayMessage(recb);
+				if (users.containsKey(recb[0])) {
+					if (users.get(recb[0])[2].byteValue() != recb[2]) {
+						relayMessage(recb);
+					}
 				}
 
 				if (ackmap != null) {
@@ -124,7 +129,11 @@ public class RoutingProtocol implements Runnable {
 
 	// When a new message is received.
 	public void receiveMessage(byte[] recb) {
-		System.out.println("message received");
+		System.out.println("message received bro");
+		byte[] plaintext = new byte[recb.length-HEADER_LENGTH];
+		System.arraycopy(recb, HEADER_LENGTH, plaintext, 0, recb.length-HEADER_LENGTH);
+		System.out.println(plaintext.toString());
+		System.out.println(new String(recb));
 	}
 
 	public void relayMessage(byte[] message) {
