@@ -144,7 +144,7 @@ public class RoutingProtocol implements Runnable {
 		} else {
 			bts[1] = message[2];
 		}
-		users.put(message[0], new byte[] {bts[0], bts[1], bts[2]});
+		users.put(message[0], new Byte[] {bts[0], bts[1], bts[2]});
 		DatagramPacket snd = new DatagramPacket(message, message.length, group, port);
 		try {
 			socket.send(snd);
