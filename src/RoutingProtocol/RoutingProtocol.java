@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.locks.ReentrantLock;
@@ -28,7 +30,7 @@ public class RoutingProtocol implements Runnable {
 	
 	public static void main(String[] args) {
 		try {
-			RoutingProtocol o = new RoutingProtocol((byte) 8);
+			RoutingProtocol o = new RoutingProtocol((byte) 6);
 			o.scan();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -139,14 +141,25 @@ public class RoutingProtocol implements Runnable {
 	
 	//Tick for the computers that we expect acks from.
 	public void pingTick() {
-		for (Byte a: pingmap.keySet()) {
-			Byte b = pingmap.get(a);
-			b = (byte) (b.byteValue() - 1);
-			pingmap.put(a, b);
-			if (b == 0) {
-				pingmap.remove(a);
-				System.out.println("User disconnected");
+		lock.lock();
+		try {
+			List<Byte> rlist = new ArrayList<>();
+			for (Byte a: pingmap.keySet()) {
+				Byte b = pingmap.get(a);
+				b = (byte) (b.byteValue() - 1);
+				pingmap.put(a, b);
+				if (b == 0) {
+					rlist.add(a);
+					System.out.println("User disconnected");
+				}
 			}
+			for (Byte host: rlist) {
+				pingmap.remove(host);
+			}
+			
+			
+		} finally {
+			lock.unlock();
 		}
 	}
 	
@@ -212,7 +225,7 @@ public class RoutingProtocol implements Runnable {
 					e.printStackTrace();
 				}
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(100);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -221,6 +234,11 @@ public class RoutingProtocol implements Runnable {
 					break;
 				} else if (re > 10) {
 					System.out.println("Timeout");
+					for (Byte host: ackmap.keySet()) {
+						if (ackmap.get(host) == false) {
+							pingmap.remove(host);
+						}
+					}
 					break;
 				}
 				System.out.println("resending");
