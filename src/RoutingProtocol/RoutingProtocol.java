@@ -175,7 +175,7 @@ public class RoutingProtocol implements Runnable {
 		lock.lock();
 		try {
 			List<Byte> rlist = new ArrayList<>();
-			for (Byte a: pingmap.keySet()) {
+			for (Byte a : pingmap.keySet()) {
 				Byte b = pingmap.get(a);
 				b = (byte) (b.byteValue() - 1);
 				pingmap.put(a, b);
@@ -184,10 +184,10 @@ public class RoutingProtocol implements Runnable {
 					System.out.println("User disconnected");
 				}
 			}
-			for (Byte host: rlist) {
+			for (Byte host : rlist) {
 				pingmap.remove(host);
 			}
-			
+
 		} finally {
 			lock.unlock();
 		}
@@ -263,7 +263,7 @@ public class RoutingProtocol implements Runnable {
 					break;
 				} else if (re > 10) {
 					System.out.println("Timeout");
-					for (Byte host: ackmap.keySet()) {
+					for (Byte host : ackmap.keySet()) {
 						if (ackmap.get(host) == false) {
 							pingmap.remove(host);
 						}
