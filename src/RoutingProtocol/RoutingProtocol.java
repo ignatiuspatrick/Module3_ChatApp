@@ -172,7 +172,6 @@ public class RoutingProtocol implements Runnable {
 
 	// Tick for the computers that we expect acks from.
 	public void pingTick() {
-<<<<<<< HEAD
 		lock.lock();
 		try {
 			List<Byte> rlist = new ArrayList<>();
