@@ -20,7 +20,7 @@ public class RoutingProtocol implements Runnable {
 	private byte ack;
 	private ReentrantLock lock;
 
-	String ip = "228.133.202.88";
+	String ip = "228.133.202.100";
 	int port = 2301;
 
 	private Map<Byte, Byte[]> users = new HashMap<>();
@@ -29,7 +29,7 @@ public class RoutingProtocol implements Runnable {
 
 	public static void main(String[] args) {
 		try {
-			RoutingProtocol o = new RoutingProtocol((byte) 200);
+			RoutingProtocol o = new RoutingProtocol((byte) 3);
 			o.scan();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -47,6 +47,7 @@ public class RoutingProtocol implements Runnable {
 		Thread ping = new Thread(new PingThread(this));
 		ping.start();
 	}
+	//hello
 
 	public class Ping implements Runnable {
 
@@ -98,7 +99,7 @@ public class RoutingProtocol implements Runnable {
 					users.put(recb[0], new Byte[] { recb[1], recb[2] });
 					relayMessage(recb);
 				}
-				pingmap.put(recb[0], (byte) 20);
+				pingmap.put(recb[0], (byte) 5);
 				Byte[] bts = users.get(recb[0]);
 				if (bts != null) {
 					if ((bts[0].byteValue() + 1) % 100 == recb[1] % 100) {
@@ -254,14 +255,14 @@ public class RoutingProtocol implements Runnable {
 					e.printStackTrace();
 				}
 				try {
-					Thread.sleep(100);
+					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 				if (!ackmap.containsValue(false)) {
 					System.out.println("Done");
 					break;
-				} else if (re > 10) {
+				} else if (re > 20) {
 					System.out.println("Timeout");
 					for (Byte host : ackmap.keySet()) {
 						if (ackmap.get(host) == false) {
