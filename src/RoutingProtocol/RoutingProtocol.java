@@ -132,6 +132,7 @@ public class RoutingProtocol implements Runnable {
 		System.out.println("message received brother");
 		byte[] plaintext = new byte[recb.length-HEADER_LENGTH];
 		System.arraycopy(recb, HEADER_LENGTH, plaintext, 0, recb.length-HEADER_LENGTH);
+		System.out.println(new String(plaintext));
 		System.out.println(plaintext.toString());
 		System.out.println(new String(recb));
 	}
