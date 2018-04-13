@@ -1,14 +1,15 @@
 package RoutingProtocol;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
 public class SimpleMulticast {
-	
+
 	private String ip = "230.0.0.0";
 	private int port = 2424;
-	
+
 	public SimpleMulticast() {
 		InetAddress group = null;
 		try {
@@ -26,9 +27,10 @@ public class SimpleMulticast {
 			e.printStackTrace();
 		}
 	}
+
 	public static void main(String[] args) {
 		SimpleMulticast sim = new SimpleMulticast();
-		
+
 	}
 
 }
