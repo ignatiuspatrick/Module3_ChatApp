@@ -214,7 +214,7 @@ public class RoutingProtocol implements Runnable {
 	public void sendAck(byte ack, byte ackid) {
 		lock.lock();
 		try {
-			byte[] b = new byte[] { id, seq, nextSpecSeq(), ack, ackid };
+			byte[] b = new byte[] { id, seq, nextSpecSeq(), ack, ackid, 0 };
 			DatagramPacket snd = new DatagramPacket(b, b.length, group, port);
 			try {
 				socket.send(snd);
@@ -229,7 +229,7 @@ public class RoutingProtocol implements Runnable {
 	public void sendPing() {
 		lock.lock();
 		try {
-			byte[] b = new byte[] { id, seq, nextSpecSeq(), -2, -2 };
+			byte[] b = new byte[] { id, seq, nextSpecSeq(), -2, -2, 0};
 
 			DatagramPacket snd = new DatagramPacket(b, b.length, group, port);
 			try {
