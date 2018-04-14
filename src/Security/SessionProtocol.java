@@ -1,25 +1,30 @@
 package Security;
 
+import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Arrays;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 public class SessionProtocol {
 
 	private static final String ALGORITHM = "AES";
 	private Cipher cipher;
-	private SecretKey sessionKey;
+	private SecretKeySpec authKey;
 
-	public SessionProtocol() {
+	public SessionProtocol(String password) {
 		try {
 			cipher = Cipher.getInstance(ALGORITHM);
-			generateSecretKey();
+			authKey = generateSecretKey(password);
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		} catch (NoSuchPaddingException e) {
@@ -27,9 +32,32 @@ public class SessionProtocol {
 		}
 	}
 
-	public void generateSecretKey() {
+	public SecretKeySpec getAuthKey() {
+		return this.authKey;
+	}
+
+	// generate secret key from password
+	public SecretKeySpec generateSecretKey(String password) {
+		SecretKeySpec specKey = null;
+		try {
+			byte[] pass = password.getBytes("UTF-8"); // get bytes of the pass
+			MessageDigest sha = MessageDigest.getInstance("SHA-1"); // generate hash function
+			pass = sha.digest(pass);
+			pass = Arrays.copyOf(pass, 16); // take 16 bits of the hash function
+			specKey = new SecretKeySpec(pass, ALGORITHM);
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+		return specKey;
+	}
+
+	// generate random secret key
+	public SecretKey generateSessionKey() {
 		// generate key
 		KeyGenerator keyGen;
+		SecretKey sessionKey = null;
 		try {
 			keyGen = KeyGenerator.getInstance(ALGORITHM);
 			SecureRandom random = new SecureRandom();
@@ -38,16 +66,16 @@ public class SessionProtocol {
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
-
+		return sessionKey;
 	}
 
 	// encrypt plain text with AES
-	public byte[] encryptPlainText(byte[] plainText) {
+	public byte[] encryptPlainText(byte[] plainText, SecretKey s) {
 		byte[] encText = null;
 
 		try {
 			// initiate cipher
-			cipher.init(Cipher.ENCRYPT_MODE, sessionKey);
+			cipher.init(Cipher.ENCRYPT_MODE, s);
 
 			// encrypt plain text
 			encText = cipher.doFinal(plainText);
@@ -88,10 +116,6 @@ public class SessionProtocol {
 
 	public boolean compareMAC(byte[] mac1, byte[] mac2) {
 		return false;
-	}
-
-	public SecretKey getSecretKey() {
-		return this.sessionKey;
 	}
 
 	public static String asHex(byte buf[]) {

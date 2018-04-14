@@ -11,6 +11,11 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
+import Security.SessionProtocol;
+
 public class RoutingProtocol implements Runnable {
 
 	private final MulticastSocket socket;
@@ -19,7 +24,8 @@ public class RoutingProtocol implements Runnable {
 	private byte id;
 	private ReentrantLock lock;
 	private byte specseq = 0;
-	private static int HEADER_LENGTH = 5;
+	private static int HEADER_LENGTH = 6;
+	private SessionProtocol sess;
 
 	String ip = "228.133.202.100";
 	int port = 2301;
@@ -30,17 +36,18 @@ public class RoutingProtocol implements Runnable {
 
 	public static void main(String[] args) {
 		try {
-			RoutingProtocol o = new RoutingProtocol((byte) 2);
+			RoutingProtocol o = new RoutingProtocol((byte) 2, "hellogroup5");
 			o.scan();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public RoutingProtocol(byte i) throws IOException {
+	public RoutingProtocol(byte i, String password) throws IOException {
 		users = new HashMap<>();
 		pingmap = new HashMap<>();
 		lock = new ReentrantLock();
+		sess = new SessionProtocol(password);
 		id = i;
 		group = InetAddress.getByName(ip);
 		socket = new MulticastSocket(port);
@@ -71,16 +78,16 @@ public class RoutingProtocol implements Runnable {
 					e.printStackTrace();
 				}
 				recb = rec.getData();
-				//System.out.println("Message Received from: " + recb[0]);
+				// System.out.println("Message Received from: " + recb[0]);
 			} while (recb[0] == id);
 			//
 			// System.out.println("Message Received from: " + recb[0] + " " + recb[1] + " "
 			// + recb[2] + " " + recb[3]);
-			
+
 			// Ping from other computers.
 			if (recb[3] == -2) {
 				if (!users.containsKey(recb[0]) || !pingmap.containsKey(recb[0])) {
-					users.put(recb[0], new Byte[] { recb[1], recb[2] , -1});
+					users.put(recb[0], new Byte[] { recb[1], recb[2], -1 });
 					relayMessage(recb);
 				}
 				pingmap.put(recb[0], (byte) 5);
@@ -95,8 +102,8 @@ public class RoutingProtocol implements Runnable {
 			// Normal messages.
 			if (recb[3] == -1) {
 				if (users.containsKey(recb[0])) {
-				 System.out.println(pingmap.containsKey(recb[0]) + " " +
-				 (users.get(recb[0])[0] + 1) % 100 + " " + recb[1] % 100);
+					System.out.println(pingmap.containsKey(recb[0]) + " " + (users.get(recb[0])[0] + 1) % 100 + " "
+							+ recb[1] % 100);
 				}
 				if ((pingmap.containsKey(recb[0]) && (users.get(recb[0])[0] + 1) % 100 == recb[1] % 100)) {
 					receiveMessage(recb);
@@ -110,7 +117,7 @@ public class RoutingProtocol implements Runnable {
 				}
 			}
 
-			//acks
+			// acks
 			if (recb[3] >= 0) {
 				if (users.containsKey(recb[0])) {
 					if (users.get(recb[0])[2].byteValue() != recb[2]) {
@@ -130,11 +137,16 @@ public class RoutingProtocol implements Runnable {
 	// When a new message is received.
 	public void receiveMessage(byte[] recb) {
 		System.out.println("message received!");
-		byte[] plaintext = new byte[recb.length-HEADER_LENGTH];
-		System.arraycopy(recb, HEADER_LENGTH, plaintext, 0, recb.length-HEADER_LENGTH);
+		recb = sess.decryptPlainText(recb, sess.getAuthKey()); // decrypt with authKey
+		byte[] header = new byte[HEADER_LENGTH];
+		System.arraycopy(recb, 0, header, 0, HEADER_LENGTH);
+		int payloadlength = (int) header[5];
+		byte[] sessionKey = new byte[recb.length - HEADER_LENGTH - payloadlength];
+		System.arraycopy(recb, HEADER_LENGTH + payloadlength + 1, sessionKey, 0, HEADER_LENGTH - payloadlength);
+		byte[] plaintext = new byte[payloadlength];
+		System.arraycopy(recb, HEADER_LENGTH + 1, plaintext, 0, payloadlength);
+		plaintext = sess.decryptPlainText(plaintext, new SecretKeySpec(sessionKey, "AES"));
 		System.out.println(new String(plaintext));
-		System.out.println(plaintext.toString());
-		System.out.println(new String(recb));
 	}
 
 	public void relayMessage(byte[] message) {
@@ -145,7 +157,7 @@ public class RoutingProtocol implements Runnable {
 		} else {
 			bts[1] = message[2];
 		}
-		users.put(message[0], new Byte[] {bts[0], bts[1], bts[2]});
+		users.put(message[0], new Byte[] { bts[0], bts[1], bts[2] });
 		DatagramPacket snd = new DatagramPacket(message, message.length, group, port);
 		try {
 			socket.send(snd);
@@ -188,7 +200,7 @@ public class RoutingProtocol implements Runnable {
 		}
 		return seq;
 	}
-	
+
 	// to the next sequence number
 	public byte nextSpecSeq() {
 		specseq++;
@@ -218,6 +230,7 @@ public class RoutingProtocol implements Runnable {
 		lock.lock();
 		try {
 			byte[] b = new byte[] { id, seq, nextSpecSeq(), -2, -2 };
+
 			DatagramPacket snd = new DatagramPacket(b, b.length, group, port);
 			try {
 				socket.send(snd);
@@ -233,10 +246,14 @@ public class RoutingProtocol implements Runnable {
 	public void outMessage(byte[] message) {
 		lock.lock();
 		try {
-			byte[] b = new byte[] { id, nextSeq(), 0, -1, -1 };
-			byte[] out = new byte[message.length + b.length];
+			SecretKey s = sess.generateSessionKey(); // generate session key
+			message = sess.encryptPlainText(message, s); // encrypt plain message with session key
+			byte[] b = new byte[] { id, nextSeq(), 0, -1, -1, (byte) message.length };
+			byte[] out = new byte[message.length + b.length + s.getEncoded().length];
 			System.arraycopy(b, 0, out, 0, b.length);
 			System.arraycopy(message, 0, out, b.length, message.length);
+			System.arraycopy(s.getEncoded(), 0, out, b.length + message.length, s.getEncoded().length);
+			out = sess.encryptPlainText(out, sess.getAuthKey()); // encrypt
 			DatagramPacket snd = new DatagramPacket(out, out.length, group, port);
 			ackmap = new HashMap<>();
 			for (Byte host : pingmap.keySet()) {
