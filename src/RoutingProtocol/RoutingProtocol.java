@@ -311,8 +311,6 @@ public class RoutingProtocol implements Runnable {
 		}
 	}
 	
-	public boolean passValid(String pass) {
-		return pass.equals("hellogroup5");
-	}
+	
 
 }
