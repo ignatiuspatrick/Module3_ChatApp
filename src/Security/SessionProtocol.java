@@ -132,13 +132,7 @@ public class SessionProtocol {
 	}
 
 	public static void main(String[] args) {
-		SessionProtocol s = new SessionProtocol();
-		byte[] e = s.encryptPlainText("Hello World".getBytes());
-		byte[] d = s.decryptPlainText(e, s.getSecretKey());
-		String encryptedString = new String(e);
-		String originalString = new String(d);
-		System.out.println(encryptedString);
-		System.out.println(originalString);
+		
 	}
 
 }
