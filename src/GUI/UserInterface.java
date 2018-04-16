@@ -12,11 +12,11 @@ import javax.swing.text.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.html.*;
-
-import RoutingProtocol.RoutingProtocol;
-import DataTransfer.FileTransfer;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import RoutingProtocol.RoutingProtocol;
+import RoutingProtocol.FileTransfer;
 
 public class UserInterface extends Thread {
 	private final JTextPane jtextFilDiscu = new JTextPane();
@@ -46,18 +46,8 @@ public class UserInterface extends Thread {
 
 	public UserInterface() {
 		this.serverName = "Group5";
-		this.PORT = 3;
-		if (this.PORT == 1) {
-			this.name = "Sibbir";
-		} else if (this.PORT == 2) {
-			this.name = "Patrick";
-		} else if (this.PORT == 3) {
-			this.name = "Akhil";
-		} else if (this.PORT == 4) {
-			this.name = "Ruben";
-		} else {
-			this.name = "Nickname";
-		}
+		this.PORT = 0;
+		this.name = "Enter Name";
 		this.password = "Enter Password";
 
 		String fontfamily = "Arial, sans-serif";
@@ -191,15 +181,11 @@ public class UserInterface extends Thread {
 					appendToPane(jtextFilDiscu,
 							"<span>Connecting to " + serverName + " with computer number " + PORT + "...</span>");
 					if (client.passValid(password)) {
-						appendToPane(jtextFilDiscu,
-								"<span>Connected to " + server.getRemoteSocketAddress() + "</span>");
+						appendToPane(jtextFilDiscu,"<span>Connected to " + server.getRemoteSocketAddress() + "</span>");
+						appendToPane(jtextListUsers, "<span>ONLINE" + "/n" +  + "</span>");
 
-						// input and output are the data coming and going from the interface
+						// input data coming to the interface
 						input = ;
-						output = ;
-
-						// send username to server
-						output.println(name);
 
 						// create new Read Thread
 						read = new Read();
