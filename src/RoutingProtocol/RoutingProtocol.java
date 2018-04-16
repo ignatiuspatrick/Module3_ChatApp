@@ -160,7 +160,7 @@ public class RoutingProtocol implements Runnable {
 		*/
 	}
 
-	public void relayMessage(Byte[] message) {
+	public void relayMessage(byte[] message) {
 		Byte[] bts = users.get(message[0]);
 		bts[0] = message[1];
 		if (message[3] != -1) {
