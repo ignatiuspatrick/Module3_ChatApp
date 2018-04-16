@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import RoutingProtocol.RoutingProtocol;
-import RoutingProtocol.FileTransfer;
+//import RoutingProtocol.FileTransfer;
 
 public class UserInterface extends Thread {
 	private final JTextPane jtextFilDiscu = new JTextPane();
@@ -33,7 +33,7 @@ public class UserInterface extends Thread {
 	private Socket server;
 	private RoutingProtocol client;
 	private RoutingProtocol o;
-	private FileTransfer file;
+	//private FileTransfer file;
 	private String message;
 	
 	//-------------Main Method-----------------------
@@ -55,10 +55,10 @@ public class UserInterface extends Thread {
 
 		final JFrame jfr = new JFrame("Chat");
 		jfr.getContentPane().setLayout(null);
-		jfr.setSize(700, 500);
-		jfr.setResizable(true);
+		jfr.setSize(700, 600);
+		jfr.setResizable(false);
 		jfr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
+		
 		// Module chat area
 		jtextFilDiscu.setBounds(183, 25, 492, 320);
 		jtextFilDiscu.setFont(font);
@@ -72,7 +72,6 @@ public class UserInterface extends Thread {
 
 		// Module of list of users
 		jtextListUsers.setBounds(25, 25, 156, 320);
-		jtextListUsers.setEditable(true);
 		jtextListUsers.setFont(font);
 		jtextListUsers.setMargin(new Insets(6, 6, 6, 6));
 		jtextListUsers.setEditable(false);
@@ -168,7 +167,7 @@ public class UserInterface extends Thread {
 			}
 		});
 
-		// connection with the network
+		// when connect button is pressed
 		jcbtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				try {
@@ -182,10 +181,7 @@ public class UserInterface extends Thread {
 							"<span>Connecting to " + serverName + " with computer number " + PORT + "...</span>");
 					if (client.passValid(password)) {
 						appendToPane(jtextFilDiscu,"<span>Connected to " + server.getRemoteSocketAddress() + "</span>");
-						appendToPane(jtextListUsers, "<span>ONLINE" + "/n" +  + "</span>");
-
-						// input data coming to the interface
-						input = ;
+						//appendToPane(jtextListUsers, "<span>ONLINE" + "/n" +  + "</span>");
 
 						// create new Read Thread
 						read = new Read();
@@ -203,7 +199,7 @@ public class UserInterface extends Thread {
 						jtextFilDiscu.setBackground(Color.WHITE);
 						jtextListUsers.setBackground(Color.WHITE);
 					} else {
-						appendToPane(jtextFilDiscu, "<span>Could not connect to Server</span>");
+						appendToPane(jtextFilDiscu, "<span>Could not connect to Server because</span>");
 						JOptionPane.showMessageDialog(jfr, "Incorrect Password");
 					}
 				} catch (Exception ex) {
@@ -214,6 +210,7 @@ public class UserInterface extends Thread {
 
 		});
 
+		// when disconnect button is pressed
 		jsbtndeco.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				jfr.add(jtfName);
@@ -235,11 +232,11 @@ public class UserInterface extends Thread {
 			}
 		});
 
-		try {
+		/*try {
 			o = new RoutingProtocol((byte) client.getID(), this.password);
 		} catch (IOException e1) {
 			e1.printStackTrace();
-		}
+		}*/
 
 	}
 
@@ -303,7 +300,7 @@ public class UserInterface extends Thread {
 			if (message.equals("")) {
 				return;
 			}
-			o.outMessage(this.getMsg().getBytes());
+			
 			this.oldMsg = message;
 			output.println(message);
 			jtextInputChat.requestFocus();
@@ -318,6 +315,10 @@ public class UserInterface extends Thread {
 	public String getMsg() {
 		return this.message;
 	}
+	
+	public String getPass() {
+		return this.password;
+	}
 
 	// read new incoming messages
 	class Read extends Thread {
@@ -327,12 +328,12 @@ public class UserInterface extends Thread {
 				try {
 					message = input.readLine();
 					if (message != null) {
-						if () {
+						/*if () {
 							
 							}
 						} else {
 							appendToPane(jtextFilDiscu, message);
-						}
+						}*/
 					}
 				} catch (IOException ex) {
 					System.err.println("Failed to parse incoming message");
