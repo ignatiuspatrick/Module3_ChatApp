@@ -168,11 +168,7 @@ public class RoutingProtocol implements Runnable {
 		} else {
 			bts[1] = message[2];
 		}
-<<<<<<< HEAD
 		users.put(message[0], new Byte[] {bts[0], bts[1], bts[2]});
-=======
-		users.put(message[0], new Byte[] { bts[0], bts[1], bts[2] });
->>>>>>> branch 'master' of https://git.snt.utwente.nl/s1969048/NetworkSystemsProjectGroup5.git
 		DatagramPacket snd = new DatagramPacket(message, message.length, group, port);
 		try {
 			socket.send(snd);
