@@ -291,15 +291,6 @@ public class UserInterface implements Observer {
 		appendToPane(jtextFilDiscu, "<span>" + "<b>Me</b>" + ":" + message.toString()+ "</span>");
 	}
 
-	// return the message
-	public String getMsg() {
-		return this.message;
-	}
-	
-	public String getPass() {
-		return this.password;
-	}
-
 	@Override
 	public void update(Observable arg0, Object obj) {
 		System.out.println("Message received");
