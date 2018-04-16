@@ -14,11 +14,14 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.html.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Observable;
+import java.util.Observer;
 
+import RoutingProtocol.Message;
 import RoutingProtocol.RoutingProtocol;
 //import RoutingProtocol.FileTransfer;
 
-public class UserInterface extends Thread {
+public class UserInterface extends Thread implements Observer {
 	private final JTextPane jtextFilDiscu = new JTextPane();
 	private final JTextPane jtextListUsers = new JTextPane();
 	private final JTextField jtextInputChat = new JTextField();
@@ -31,20 +34,16 @@ public class UserInterface extends Thread {
 	private BufferedReader input;
 	private PrintWriter output;
 	private Socket server;
-	private RoutingProtocol client;
-	private RoutingProtocol o;
+	//private RoutingProtocol client;
+
 	//private FileTransfer file;
 	private String message;
-	
-	//-------------Main Method-----------------------
-	
-	public static void main(String[] args) throws Exception {
-		UserInterface ui = new UserInterface();
-	}
+	private Startup start;
 
 	// ------------Login page interface--------------
 
-	public UserInterface() {
+	public UserInterface(Startup s) {
+		this.start = s;
 		this.serverName = "Group5";
 		this.PORT = 0;
 		this.name = "Enter Name";
@@ -179,7 +178,7 @@ public class UserInterface extends Thread {
 
 					appendToPane(jtextFilDiscu,
 							"<span>Connecting to " + serverName + " with computer number " + PORT + "...</span>");
-					if (client.passValid(password)) {
+					if (start.passValid(password)) {
 						appendToPane(jtextFilDiscu,"<span>Connected to " + server.getRemoteSocketAddress() + "</span>");
 						//appendToPane(jtextListUsers, "<span>ONLINE" + "/n" +  + "</span>");
 
@@ -339,6 +338,19 @@ public class UserInterface extends Thread {
 					System.err.println("Failed to parse incoming message");
 				}
 			}
+		}
+	}
+
+	@Override
+	public void update(Observable arg0, Object obj) {
+		if (obj instanceof Message) {
+			Message m = (Message) obj;
+			
+		}
+		if (obj instanceof List) {
+			List l = (List) obj;
+			
+			
 		}
 	}
 }
