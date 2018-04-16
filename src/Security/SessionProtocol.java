@@ -132,6 +132,13 @@ public class SessionProtocol {
 	}
 
 	public static void main(String[] args) {
+		SessionProtocol sess = new SessionProtocol("hellogroup5");
+		String s = "hello world";
+		SecretKey sec = sess.generateSessionKey();
+		byte[] en = sess.encryptPlainText(s.getBytes(), sec);
+		System.out.println(new String(en));
+		byte[] de = sess.decryptPlainText(en, sec);
+		System.out.println(new String(de));
 		
 	}
 

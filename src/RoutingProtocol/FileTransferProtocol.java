@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
+import java.util.Scanner;
 import java.util.Set;
 
 public class FileTransferProtocol extends Observable {
@@ -20,6 +21,13 @@ public class FileTransferProtocol extends Observable {
 			routing = new RoutingProtocol(this, i, password, name);
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+	
+	public void scan() {
+		while (true) {
+			Scanner scan = new Scanner(System.in);
+			sendMessage(scan.nextLine());
 		}
 	}
 
@@ -39,8 +47,7 @@ public class FileTransferProtocol extends Observable {
 		byte[] text = new byte[message.length - TIME_LENGTH];
 		System.arraycopy(message, 0, time, 0, TIME_LENGTH);
 		System.arraycopy(message, TIME_LENGTH, text, 0, message.length - TIME_LENGTH);
-		System.out.println(new String(time) + " " + new String(text));
-		String name = "unkown";
+		String name = "unknown";
 		if(usernames.containsKey(id)) {
 			name = usernames.get(id);
 		}
@@ -48,8 +55,8 @@ public class FileTransferProtocol extends Observable {
 	}
 	
 	public static void main(String[] args) {
-		FileTransferProtocol b = new FileTransferProtocol((byte) 2, "hellogroup5", "Sibbir");
-		b.getrouting().scan();
+		FileTransferProtocol b = new FileTransferProtocol((byte)85, "hellogroup5", "Sibbir");
+		b.scan();
 	}
 	
 	public void updateList(byte id, byte[] n) {
