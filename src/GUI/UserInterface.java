@@ -5,40 +5,30 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.net.*;
 import java.io.*;
 import javax.swing.*;
 import javax.swing.text.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.html.*;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Observable;
 import java.util.Observer;
-
 import RoutingProtocol.Message;
-import RoutingProtocol.RoutingProtocol;
-//import RoutingProtocol.FileTransfer;
 
 public class UserInterface implements Observer {
 	private final JTextPane jtextFilDiscu = new JTextPane();
 	private final JTextPane jtextListUsers = new JTextPane();
-	private final JTextField jtextInputChat = new JTextField();
+	private final JTextArea jtextInputChat = new JTextArea();
 	private String oldMsg = "";
 	private Thread read;
 	private String serverName;
 	private int PORT;
 	private String name;
 	private String password;
-	private BufferedReader input;
 	private PrintWriter output;
-	private Socket server;
-	//private RoutingProtocol client;
-
-	//private FileTransfer file;
 	private String message;
 	private Startup start;
+	private String userHeader = "<h><b>USERS ONLINE</b></h>";
 
 	// ------------Login page interface--------------
 
@@ -50,32 +40,33 @@ public class UserInterface implements Observer {
 		this.password = "Enter Password";
 
 		String fontfamily = "Arial, sans-serif";
-		Font font = new Font(fontfamily, Font.PLAIN, 15);
+		Font font = new Font(fontfamily, Font.PLAIN, 24);
+		Font msgfont = new Font(fontfamily, Font.PLAIN, 28);
 
 		final JFrame jfr = new JFrame("Chat");
 		jfr.getContentPane().setLayout(null);
-		jfr.setSize(700, 600);
+		jfr.setSize(1300, 900);
 		jfr.setResizable(false);
 		jfr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		// Module chat area
-		jtextFilDiscu.setBounds(183, 25, 492, 320);
+		jtextFilDiscu.setBounds(390, 25, 892, 520);
 		jtextFilDiscu.setFont(font);
 		jtextFilDiscu.setMargin(new Insets(6, 6, 6, 6));
 		jtextFilDiscu.setEditable(false);
 		JScrollPane jtextFilDiscuSP = new JScrollPane(jtextFilDiscu);
-		jtextFilDiscuSP.setBounds(183, 25, 492, 320);
+		jtextFilDiscuSP.setBounds(390, 25, 892, 520);
 
 		jtextFilDiscu.setContentType("text/html");
 		jtextFilDiscu.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
 
 		// Module of list of users
-		jtextListUsers.setBounds(25, 25, 156, 320);
+		jtextListUsers.setBounds(25, 25, 356, 520);
 		jtextListUsers.setFont(font);
 		jtextListUsers.setMargin(new Insets(6, 6, 6, 6));
 		jtextListUsers.setEditable(false);
 		JScrollPane jsplistuser = new JScrollPane(jtextListUsers);
-		jsplistuser.setBounds(25, 25, 156, 320);
+		jsplistuser.setBounds(25, 25, 356, 520);
 
 		jtextListUsers.setContentType("text/html");
 		jtextListUsers.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
@@ -95,11 +86,15 @@ public class UserInterface implements Observer {
 
 		// position of Modules
 		jcbtn.setFont(font);
-		jtfAddr.setBounds(25, 380, 135, 40);
-		jtfName.setBounds(375, 380, 135, 40);
-		jtfport.setBounds(200, 380, 135, 40);
-		jcbtn.setBounds(575, 380, 100, 40);
-		jtfpassword.setBounds(25, 425, 650, 40);
+		jtfAddr.setFont(font);
+		jtfName.setFont(font);
+		jtfport.setFont(font);
+		jtfpassword.setFont(font);
+		jtfAddr.setBounds(25, 580, 305, 80);
+		jtfName.setBounds(655, 580, 305, 80);
+		jtfport.setBounds(340, 580, 305, 80);
+		jcbtn.setBounds(970, 580, 305, 80);
+		jtfpassword.setBounds(25, 700, 1250, 80);
 
 		// color of chat modules and user list
 		jtextFilDiscu.setBackground(Color.LIGHT_GRAY);
@@ -121,21 +116,25 @@ public class UserInterface implements Observer {
 		// -------------Interface after connection established-------------
 
 		// Field message user input
-		jtextInputChat.setBounds(0, 350, 400, 50);
-		jtextInputChat.setFont(font);
+		jtextInputChat.setBounds(0, 580, 1255, 100);
+		jtextInputChat.setFont(msgfont);
 		jtextInputChat.setMargin(new Insets(6, 6, 6, 6));
+		jtextInputChat.setLineWrap(true);
+		jtextInputChat.setWrapStyleWord(true);
 		final JScrollPane jtextInputChatSP = new JScrollPane(jtextInputChat);
-		jtextInputChatSP.setBounds(25, 350, 650, 50);
+		jtextInputChatSP.setBounds(25, 580, 1255, 100);
+		jtextInputChatSP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+		jtextInputChatSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
 		// button send
 		final JButton jsbtn = new JButton("Send");
 		jsbtn.setFont(font);
-		jsbtn.setBounds(575, 410, 100, 35);
+		jsbtn.setBounds(975, 700, 300, 80);
 
 		// button Disconnect
 		final JButton jsbtndeco = new JButton("Disconnect");
 		jsbtndeco.setFont(font);
-		jsbtndeco.setBounds(25, 410, 130, 35);
+		jsbtndeco.setBounds(25, 700, 300, 80);
 
 		jtextInputChat.addKeyListener(new KeyAdapter() {
 			// send message on Enter
@@ -179,7 +178,7 @@ public class UserInterface implements Observer {
 							"<span>Connecting to " + serverName + " with computer number " + PORT + "...</span>");
 					if (start.passValid(password)) {
 						appendToPane(jtextFilDiscu,"<span>Connected to group 5</span>");
-						//appendToPane(jtextListUsers, "<span>ONLINE" + "/n" +  + "</span>");
+						appendToPane(jtextListUsers, userHeader);
 						start.Connect((byte)PORT, password, name);
 						jfr.remove(jtfName);
 						jfr.remove(jtfport);
@@ -223,13 +222,6 @@ public class UserInterface implements Observer {
 				output.close();
 			}
 		});
-
-		/*try {
-			o = new RoutingProtocol((byte) client.getID(), this.password);
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}*/
-
 	}
 
 	// check if if all field are not empty
@@ -291,12 +283,12 @@ public class UserInterface implements Observer {
 		if (message.equals("") || message == null) {
 			return;
 		}
-		
 		this.oldMsg = message;
 		jtextInputChat.requestFocus();
 		jtextInputChat.setText(null);
 		Thread t = new Thread(new sendThread(start, message));
 		t.start();
+		appendToPane(jtextFilDiscu, "<span>" + "<b>Me</b>" + ":" + message.toString()+ "</span>");
 	}
 
 	// return the message
@@ -313,10 +305,12 @@ public class UserInterface implements Observer {
 		System.out.println("Message received");
 		if (obj instanceof Message) {
 			Message m = (Message) obj;
-			appendToPane(jtextFilDiscu, "<span>" + m.toString() + "</span>");
+			String name = m.toString().split(":")[0];
+			appendToPane(jtextFilDiscu, "<span>" + "<b>" + name + "</b>" + ":" + m.toString().split(":")[1] + "</span>");
 			System.out.println(m.toString());
 		}
 		if (obj instanceof Object[]) {
+			jtextListUsers.setText(userHeader);
 			for (Object p: (Object[]) obj) {
 				appendToPane(jtextListUsers, "<span>" + (String) p + "</span>");
 			}
