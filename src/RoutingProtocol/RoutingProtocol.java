@@ -144,6 +144,7 @@ public class RoutingProtocol implements Runnable {
 		byte[] plaintext = new byte[payloadlength];
 		System.arraycopy(recb, HEADER_LENGTH + 1, plaintext, 0, payloadlength);
 		plaintext = sess.decryptPlainText(plaintext, new SecretKeySpec(sessionKey, "AES"));
+		file.receiveMessage(recb[0], plaintext);
 		System.out.println(new String(plaintext));
 		/*
 		System.out.println("message received!");

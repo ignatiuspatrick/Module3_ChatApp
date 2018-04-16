@@ -34,12 +34,11 @@ public class FileTransferProtocol extends Observable {
 		
 	}
 	
-	public void receiveMessage(byte[] message) {
+	public void receiveMessage(byte id, byte[] message) {
 		byte[] time = new byte[TIME_LENGTH];
 		byte[] text = new byte[message.length - TIME_LENGTH];
-		byte id = message[0];
-		System.arraycopy(message, 1, time, 0, TIME_LENGTH);
-		System.arraycopy(message, TIME_LENGTH + 1, text, 0, message.length - TIME_LENGTH);
+		System.arraycopy(message, 0, time, 0, TIME_LENGTH);
+		System.arraycopy(message, TIME_LENGTH, text, 0, message.length - TIME_LENGTH);
 		System.out.println(new String(time) + " " + new String(text));
 		String name = "unkown";
 		if(usernames.containsKey(id)) {
