@@ -9,6 +9,8 @@ import java.util.Observable;
 import java.util.Scanner;
 import java.util.Set;
 
+import GUI.Startup;
+
 public class FileTransferProtocol extends Observable {
 	
 	private Map<Byte, String> usernames = new HashMap<>();
@@ -51,13 +53,11 @@ public class FileTransferProtocol extends Observable {
 		if(usernames.containsKey(id)) {
 			name = usernames.get(id);
 		}
+		System.out.println("notifying observers");
+		setChanged();
 		notifyObservers(new Message(name, new Long(new String(time)), new String(text)));
 	}
 	
-	public static void main(String[] args) {
-		FileTransferProtocol b = new FileTransferProtocol((byte)85, "hellogroup5", "Sibbir");
-		b.scan();
-	}
 	
 	public void updateList(byte id, byte[] n) {
 		usernames.put(id, new String(n));
@@ -74,7 +74,8 @@ public class FileTransferProtocol extends Observable {
 				l.add(usernames.get(b));
 			}
 		}
-		notifyObservers(l);
+		setChanged();
+		notifyObservers(l.toArray());
 	}
 	
 }

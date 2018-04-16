@@ -21,7 +21,7 @@ import RoutingProtocol.Message;
 import RoutingProtocol.RoutingProtocol;
 //import RoutingProtocol.FileTransfer;
 
-public class UserInterface extends Thread implements Observer {
+public class UserInterface implements Observer {
 	private final JTextPane jtextFilDiscu = new JTextPane();
 	private final JTextPane jtextListUsers = new JTextPane();
 	private final JTextField jtextInputChat = new JTextField();
@@ -169,7 +169,6 @@ public class UserInterface extends Thread implements Observer {
 		// when connect button is pressed
 		jcbtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
-				try {
 					name = jtfName.getText();
 					String port = jtfport.getText();
 					serverName = jtfAddr.getText();
@@ -179,12 +178,9 @@ public class UserInterface extends Thread implements Observer {
 					appendToPane(jtextFilDiscu,
 							"<span>Connecting to " + serverName + " with computer number " + PORT + "...</span>");
 					if (start.passValid(password)) {
-						appendToPane(jtextFilDiscu,"<span>Connected to " + server.getRemoteSocketAddress() + "</span>");
+						appendToPane(jtextFilDiscu,"<span>Connected to group 5</span>");
 						//appendToPane(jtextListUsers, "<span>ONLINE" + "/n" +  + "</span>");
-
-						// create new Read Thread
-						read = new Read();
-						read.start();
+						start.Connect((byte)PORT, password, name);
 						jfr.remove(jtfName);
 						jfr.remove(jtfport);
 						jfr.remove(jtfAddr);
@@ -201,10 +197,7 @@ public class UserInterface extends Thread implements Observer {
 						appendToPane(jtextFilDiscu, "<span>Could not connect to Server because</span>");
 						JOptionPane.showMessageDialog(jfr, "Incorrect Password");
 					}
-				} catch (Exception ex) {
-					appendToPane(jtextFilDiscu, "<span>Could not connect to Server</span>");
-					JOptionPane.showMessageDialog(jfr, ex.getMessage());
-				}
+
 			}
 
 		});
@@ -284,30 +277,26 @@ public class UserInterface extends Thread implements Observer {
 		HTMLEditorKit editorKit = (HTMLEditorKit) tp.getEditorKit();
 		try {
 			editorKit.insertHTML(doc, doc.getLength(), msg, 0, 0, null);
-			tp.setCaretPosition(doc.getLength());
-		} catch (Exception e) {
+		} catch (BadLocationException | IOException e) {
 			e.printStackTrace();
 		}
+		tp.setCaretPosition(doc.getLength());
 	}
 
 	//--------------Methods for sending and receiving messages to and from to the other layer------------
 	
 	// sending the new messages
 	public void sendMessage() {
-		try {
-			message = jtextInputChat.getText().trim();
-			if (message.equals("")) {
-				return;
-			}
-			
-			this.oldMsg = message;
-			output.println(message);
-			jtextInputChat.requestFocus();
-			jtextInputChat.setText(null);
-		} catch (Exception ex) {
-			JOptionPane.showMessageDialog(null, ex.getMessage());
-			System.exit(0);
+		message = jtextInputChat.getText().trim();
+		if (message.equals("") || message == null) {
+			return;
 		}
+		
+		this.oldMsg = message;
+		jtextInputChat.requestFocus();
+		jtextInputChat.setText(null);
+		Thread t = new Thread(new sendThread(start, message));
+		t.start();
 	}
 
 	// return the message
@@ -319,38 +308,36 @@ public class UserInterface extends Thread implements Observer {
 		return this.password;
 	}
 
-	// read new incoming messages
-	class Read extends Thread {
-		public void run() {
-			String message;
-			while (!Thread.currentThread().isInterrupted()) {
-				try {
-					message = input.readLine();
-					if (message != null) {
-						/*if () {
-							
-							}
-						} else {
-							appendToPane(jtextFilDiscu, message);
-						}*/
-					}
-				} catch (IOException ex) {
-					System.err.println("Failed to parse incoming message");
-				}
-			}
-		}
-	}
-
 	@Override
 	public void update(Observable arg0, Object obj) {
+		System.out.println("Message received");
 		if (obj instanceof Message) {
 			Message m = (Message) obj;
+			appendToPane(jtextFilDiscu, "<span>" + m.toString() + "</span>");
+			System.out.println(m.toString());
+		}
+		if (obj instanceof Object[]) {
+			for (Object p: (Object[]) obj) {
+				appendToPane(jtextListUsers, "<span>" + (String) p + "</span>");
+			}
 			
 		}
-		if (obj instanceof List) {
-			List l = (List) obj;
-			
-			
+	}
+	
+	public class sendThread implements Runnable  {
+
+		private Startup start;
+		private String message;
+		
+		public sendThread(Startup s, String m) {
+			start = s;
+			message = m;
 		}
+		
+		@Override
+		public void run() {
+			start.Send(message);
+		}
+		
 	}
 }
