@@ -14,7 +14,7 @@ public class PingThread implements Runnable {
 			routing.pingTick();
 			routing.sendPing();
 			try {
-				Thread.sleep(00);
+				Thread.sleep(2000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
