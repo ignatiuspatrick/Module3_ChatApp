@@ -137,7 +137,7 @@ public class RoutingProtocol implements Runnable {
 		System.out.println(new String(recb));
 	}
 
-	public void relayMessage(byte[] message) {
+	public void relayMessage(Byte[] message) {
 		Byte[] bts = users.get(message[0]);
 		bts[0] = message[1];
 		if (message[3] != -1) {
@@ -145,7 +145,7 @@ public class RoutingProtocol implements Runnable {
 		} else {
 			bts[1] = message[2];
 		}
-		users.put(message[0], new byte[] {bts[0], bts[1], bts[2]});
+		users.put(message[0], new Byte[] {bts[0], bts[1], bts[2]});
 		DatagramPacket snd = new DatagramPacket(message, message.length, group, port);
 		try {
 			socket.send(snd);
