@@ -304,5 +304,9 @@ public class RoutingProtocol implements Runnable {
 			e.printStackTrace();
 		}
 	}
+	
+	public boolean passValid(String pass) {
+		return pass.equals("hellogroup5");
+	}
 
 }
