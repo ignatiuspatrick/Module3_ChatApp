@@ -340,7 +340,6 @@ public class UserInterface implements Observer {
 	// listen for new messages from the other layer
 	@Override
 	public void update(Observable arg0, Object obj) {
-		System.out.println("Message received");
 		
 		// if message is not a list, add it to the discussion pane with the username of the person sent in bold
 		if (obj instanceof Message) {

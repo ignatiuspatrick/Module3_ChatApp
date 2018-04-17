@@ -90,7 +90,7 @@ public class RoutingProtocol implements Runnable {
 					drev = sess.decryptPlainText(drev, sess.getSecretkey());
 					
 				} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
-					System.out.println("Failed to decrypt messages");
+					System.out.println("Failed to decrypt message");
 					flag = true;
 					continue;
 				} // decrypt with authKey
@@ -111,8 +111,14 @@ public class RoutingProtocol implements Runnable {
 				if (flag == true) {
 					continue;
 				}
-				recb = new byte[temp[0] - password.length];
-				System.arraycopy(drev, password.length, recb, 0, drev.length - password.length);
+				
+				if (drev[password.length + 3] == -1) {
+					recb = new byte[HEADER_LENGTH + drev[password.length + 5] + 16];
+					System.arraycopy(drev, password.length, recb, 0, HEADER_LENGTH + drev[password.length + 5] + 16);
+				} else {
+					recb = new byte[HEADER_LENGTH + drev[password.length + 5]];
+					System.arraycopy(drev, password.length, recb, 0, HEADER_LENGTH + drev[password.length + 5]);
+				}
 				//System.out.println(recb[0]);
 			} while (recb[0] == id || flag == true);
 			// Ping from other computers.
@@ -122,8 +128,8 @@ public class RoutingProtocol implements Runnable {
 					relayMessage(recb);
 				}
 				pingmap.put(recb[0], (byte) 5);
-				byte[] n = new byte[recb.length - HEADER_LENGTH];
-				System.arraycopy(recb, HEADER_LENGTH, n, 0, recb.length - HEADER_LENGTH);
+				byte[] n = new byte[recb[5]];
+				System.arraycopy(recb, HEADER_LENGTH, n, 0, recb[5]);
 				file.updateList(recb[0], n);
 				Byte[] bts = users.get(recb[0]);
 				if (bts != null) {
@@ -274,7 +280,7 @@ public class RoutingProtocol implements Runnable {
 	public void sendPing() {
 		lock.lock();
 		try {
-			byte[] b = new byte[] { id, seq, nextSpecSeq(), -2, -2, 0 };
+			byte[] b = new byte[] { id, seq, nextSpecSeq(), -2, -2, (byte) name.length };
 			byte[] out = new byte[b.length + name.length];
 			System.arraycopy(b, 0, out, 0, b.length);
 			System.arraycopy(name, 0, out, b.length, name.length);

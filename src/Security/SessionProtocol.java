@@ -73,6 +73,7 @@ public class SessionProtocol {
 	public byte[] encryptPlainText(byte[] plainText, SecretKey s) throws InvalidKeyException,  IllegalBlockSizeException, BadPaddingException{
 		byte[] encText = null;
 			// initiate cipher
+		System.out.println(new String(plainText));
 			cipher.init(Cipher.ENCRYPT_MODE, s);
 
 			// encrypt plain text

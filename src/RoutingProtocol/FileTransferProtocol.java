@@ -53,7 +53,6 @@ public class FileTransferProtocol extends Observable {
 		if(usernames.containsKey(id)) {
 			name = usernames.get(id);
 		}
-		System.out.println("notifying observers");
 		setChanged();
 		notifyObservers(new Message(name, new Long(new String(time)), new String(text)));
 	}
