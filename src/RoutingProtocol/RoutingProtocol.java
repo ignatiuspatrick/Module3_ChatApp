@@ -39,6 +39,7 @@ public class RoutingProtocol implements Runnable {
 	private Map<Byte, Byte[]> users;
 	private Map<Byte, Byte> pingmap;
 	private Map<Byte, Boolean> ackmap;
+	private boolean running = true;
 	
 	public RoutingProtocol(FileTransferProtocol f, byte i, String pass, String n) throws IOException {
 		file = f;
@@ -57,11 +58,17 @@ public class RoutingProtocol implements Runnable {
 		Thread ping = new Thread(new PingThread(this));
 		ping.start();
 	}
-
-
+	
+	public void close() {
+		socket.close();
+		running = false;
+	}
 
 	public void run() {
 		while (true) {
+			if (running == false) {
+				break;
+			}
 			byte[] buf = new byte[1000];
 			byte[] recb = new byte[5];
 			byte[] drev = new byte[5];
@@ -72,6 +79,9 @@ public class RoutingProtocol implements Runnable {
 				try {
 					socket.receive(rec);
 				} catch (IOException e) {
+					if (running == false) {
+						break;
+					}
 					try {
 						socket = new MulticastSocket(port);
 					} catch (IOException e1) {

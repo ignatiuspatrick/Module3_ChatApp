@@ -263,7 +263,7 @@ public class UserInterface implements Observer {
 				jtextFilDiscu.setBackground(Color.LIGHT_GRAY);
 				jtextListUsers.setBackground(Color.LIGHT_GRAY);
 				appendToPane(jtextFilDiscu, "<span>Connection closed.</span>");
-				output.close();
+				start.Disconnect();
 			}
 		});
 	}

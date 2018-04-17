@@ -19,6 +19,10 @@ public class Startup {
 		file = new FileTransferProtocol(id, password, name);
 		file.addObserver(i);
 	}
+	
+	public void Disconnect() {
+		file.getrouting().close();
+	}
 
 	
 	public void Send(String s) {
