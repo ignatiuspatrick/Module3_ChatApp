@@ -132,26 +132,21 @@ public class UserInterface implements Observer {
 					password = jtfpassword.getText();
 	
 					appendToPane(jtextFilDiscu,"<span>Connecting to " + serverName + " with computer number " + PORT + "...</span>");
-					if (start.passValid(password)) {
-						appendToPane(jtextFilDiscu,"<span>Connected to group 5</span>");
-						appendToPane(jtextListUsers, userHeader);
-						start.Connect((byte)PORT, password, name);
-						jfr.remove(jtfName);
-						jfr.remove(jtfport);
-						jfr.remove(jtfAddr);
-						jfr.remove(jcbtn);
-						jfr.remove(jtfpassword);
-						jfr.add(jsbtn);
-						jfr.add(jtextInputChatSP);
-						jfr.add(jsbtndeco);
-						jfr.revalidate();
-						jfr.repaint();
-						jtextFilDiscu.setBackground(Color.WHITE);
-						jtextListUsers.setBackground(Color.WHITE);
-					} else {
-						appendToPane(jtextFilDiscu, "<span>Could not connect to Server</span>");
-						JOptionPane.showMessageDialog(jfr, "Incorrect Password");
-					}
+					appendToPane(jtextFilDiscu,"<span>Connected to group 5</span>");
+					appendToPane(jtextListUsers, userHeader);
+					start.Connect((byte)PORT, password, name);
+					jfr.remove(jtfName);
+					jfr.remove(jtfport);
+					jfr.remove(jtfAddr);
+					jfr.remove(jcbtn);
+					jfr.remove(jtfpassword);
+					jfr.add(jsbtn);
+					jfr.add(jtextInputChatSP);
+					jfr.add(jsbtndeco);
+					jfr.revalidate();
+					jfr.repaint();
+					jtextFilDiscu.setBackground(Color.WHITE);
+					jtextListUsers.setBackground(Color.WHITE);
 				} else if(e.getKeyCode() == KeyEvent.VK_UP) {
 					
 				}
@@ -169,26 +164,25 @@ public class UserInterface implements Observer {
 
 					appendToPane(jtextFilDiscu,
 							"<span>Connecting to " + serverName + " with computer number " + PORT + "...</span>");
-					if (start.passValid(password)) {
-						appendToPane(jtextFilDiscu,"<span>Connected to group 5</span>");
-						appendToPane(jtextListUsers, userHeader);
-						start.Connect((byte)PORT, password, name);
-						jfr.remove(jtfName);
-						jfr.remove(jtfport);
-						jfr.remove(jtfAddr);
-						jfr.remove(jcbtn);
-						jfr.remove(jtfpassword);
-						jfr.add(jsbtn);
-						jfr.add(jtextInputChatSP);
-						jfr.add(jsbtndeco);
-						jfr.revalidate();
-						jfr.repaint();
-						jtextFilDiscu.setBackground(Color.WHITE);
-						jtextListUsers.setBackground(Color.WHITE);
-					} else {
-						appendToPane(jtextFilDiscu, "<span>Could not connect to Server</span>");
-						JOptionPane.showMessageDialog(jfr, "Incorrect Password");
-					}
+					appendToPane(jtextFilDiscu,"<span>Connected to group 5</span>");
+					appendToPane(jtextListUsers, userHeader);
+					start.Connect((byte)PORT, password, name);
+					jfr.remove(jtfName);
+					jfr.remove(jtfport);
+					jfr.remove(jtfAddr);
+					jfr.remove(jcbtn);
+					jfr.remove(jtfpassword);
+					jfr.add(jsbtn);
+					jfr.add(jtextInputChatSP);
+					jfr.add(jsbtndeco);
+					jfr.revalidate();
+					jfr.repaint();
+					jtextFilDiscu.setBackground(Color.WHITE);
+					jtextListUsers.setBackground(Color.WHITE);
+					//} else {
+					//	appendToPane(jtextFilDiscu, "<span>Could not connect to Server</span>");
+					//	JOptionPane.showMessageDialog(jfr, "Incorrect Password");
+					//}
 
 			}
 
@@ -360,6 +354,7 @@ public class UserInterface implements Observer {
 		if (obj instanceof Object[]) {
 			
 			// first remove the list already in pane to avoid duplication 
+			
 			jtextListUsers.setText(userHeader);
 			
 			for (Object p: (Object[]) obj) {

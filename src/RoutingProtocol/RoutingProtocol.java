@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.security.InvalidKeyException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +12,8 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -18,7 +21,7 @@ import Security.SessionProtocol;
 
 public class RoutingProtocol implements Runnable {
 
-	private final MulticastSocket socket;
+	private MulticastSocket socket;
 	private final InetAddress group;
 	private byte seq = 0;
 	private byte id;
@@ -30,19 +33,21 @@ public class RoutingProtocol implements Runnable {
 	String ip = "228.133.202.101";
 	int port = 2301;
 	
+	private final byte[] password;
 	private final byte[] name;
 	private final FileTransferProtocol file;
 	private Map<Byte, Byte[]> users;
 	private Map<Byte, Byte> pingmap;
 	private Map<Byte, Boolean> ackmap;
 
-	public RoutingProtocol(FileTransferProtocol f, byte i, String password, String n) throws IOException {
+	public RoutingProtocol(FileTransferProtocol f, byte i, String pass, String n) throws IOException {
 		file = f;
 		name = n.getBytes();
 		users = new HashMap<>();
 		pingmap = new HashMap<>();
 		lock = new ReentrantLock();
-		sess = new SessionProtocol(password);
+		sess = new SessionProtocol(pass);
+		password = pass.getBytes();
 		id = i;
 		group = InetAddress.getByName(ip);
 		socket = new MulticastSocket(port);
@@ -59,28 +64,57 @@ public class RoutingProtocol implements Runnable {
 		while (true) {
 			byte[] buf = new byte[1000];
 			byte[] recb = new byte[5];
+			byte[] drev = new byte[5];
+			boolean flag;
 			DatagramPacket rec = new DatagramPacket(buf, buf.length);
 			do {
+				flag = false;
 				try {
 					socket.receive(rec);
 				} catch (IOException e) {
-					e.printStackTrace();
+					try {
+						socket = new MulticastSocket(port);
+					} catch (IOException e1) {
+						System.out.println("Failed to create socket");
+						flag = true;
+						continue;
+					}
 				}
 				byte[] temp = rec.getData();
-				recb = new byte[temp[0]];
-				System.arraycopy(temp, 1, recb, 0, temp[0]);;
+				drev = new byte[temp[0]];
+				System.arraycopy(temp, 1, drev, 0, temp[0]);;
 				//System.out.println(new String(recb));
 				//System.out.println("Receiver length: " + recb.length);
 				//System.out.println("message received!");
-				recb = sess.decryptPlainText(recb, sess.getAuthKey()); // decrypt with authKey
+				try {
+					drev = sess.decryptPlainText(drev, sess.getAuthKey());
+					
+				} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+					System.out.println("Failed to decrypt messages");
+					flag = true;
+					continue;
+				} // decrypt with authKey
 				
-				// System.out.println("Message Received from: " + header[0]);
+				for (int c = 0; c < password.length; c++) {
+					try {
+						if (drev[c] != password[c]) {
+							System.out.println("Wrong Password");
+							flag = true;
+							break;
+						}
+					} catch(ArrayIndexOutOfBoundsException e) {
+						System.out.println("Password Error");
+						flag = true;
+						break;
+					}
+				}
+				if (flag == true) {
+					continue;
+				}
+				recb = new byte[temp[0] - password.length];
+				System.arraycopy(drev, password.length, recb, 0, drev.length - password.length);
 				//System.out.println(recb[0]);
-			} while (recb[0] == id);
-			//
-			//System.out.println("Message Received from: " + recb[0] + " " + recb[1] + " "
-			// + recb[2] + " " + recb[3]);
-
+			} while (recb[0] == id || flag == true);
 			// Ping from other computers.
 			if (recb[3] == -2) {
 				if (!users.containsKey(recb[0]) || !pingmap.containsKey(recb[0])) {
@@ -136,15 +170,19 @@ public class RoutingProtocol implements Runnable {
 
 	// When a new message is received.
 	public void receiveMessage(byte[] recb) {
+		try {
 		int payloadlength = (int) recb[5];
-		byte[] sessionKey = new byte[recb.length - HEADER_LENGTH - payloadlength];
-		System.arraycopy(recb, HEADER_LENGTH + payloadlength, sessionKey, 0, recb.length - HEADER_LENGTH - payloadlength);
+		byte[] sessionKey = new byte[16];
+		System.arraycopy(recb, HEADER_LENGTH + payloadlength, sessionKey, 0, 16);
 		byte[] plaintext = new byte[payloadlength];
-
 		System.arraycopy(recb, HEADER_LENGTH, plaintext, 0, payloadlength);
 		plaintext = sess.decryptPlainText(plaintext, new SecretKeySpec(sessionKey, "AES"));
 		file.receiveMessage(recb[0], plaintext);
 		System.out.println(new String(plaintext));
+		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+			System.out.println("Failed to decrypt incoming payload");
+			e.printStackTrace();
+		}
 		/*
 		System.out.println("message received!");
 		recb = sess.decryptPlainText(recb, sess.getAuthKey()); // decrypt with authKey
@@ -195,7 +233,7 @@ public class RoutingProtocol implements Runnable {
 				pingmap.remove(host);
 			}
 			updatecounter++;
-			if (updatecounter > 10) {
+			if (updatecounter > 4) {
 				file.sendUpdate(pingmap.keySet());
 				updatecounter = 0;
 			}
@@ -267,7 +305,7 @@ public class RoutingProtocol implements Runnable {
 			while (true) {
 				Send(out);
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(200);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -289,25 +327,28 @@ public class RoutingProtocol implements Runnable {
 				//snd = new DatagramPacket(newsnd, newsnd.length, group, port);
 			}
 
+		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e1) {
+			System.out.println("Failed to encrypt payload");
 		} finally {
 			lock.unlock();
 		}
 	}
 
 	public void Send(byte[] out) {
-		//System.out.println("Non encrypted: " + new String(out));
-		byte[] encrypted = sess.encryptPlainText(out, sess.getAuthKey()); // encrypt
-		byte length = (byte) encrypted.length;
-		byte[] toSend = new byte[encrypted.length + 1];
-		toSend[0] = length;
-		System.arraycopy(encrypted, 0, toSend, 1, encrypted.length);
-		//System.out.println("encrypted: " + new String(toSend));
-		//System.out.println("Length sent " + toSend.length);
-		DatagramPacket snd = new DatagramPacket(toSend, toSend.length, group, port);
 		try {
-			socket.send(snd);
-		} catch (IOException e) {
-			e.printStackTrace();
+			//System.out.println("Non encrypted: " + new String(out));
+			byte[] encrypted = new byte[out.length + password.length];
+			System.arraycopy(password, 0, encrypted, 0, password.length);
+			System.arraycopy(out, 0, encrypted, password.length, out.length);
+			encrypted = sess.encryptPlainText(encrypted, sess.getAuthKey());
+			byte[] toSend = new byte[encrypted.length + 1];
+			toSend[0] = (byte) (toSend.length - 1);
+			System.arraycopy(encrypted, 0, toSend, 1 , encrypted.length);
+			//System.out.println("encrypted: " + (byte) (toSend.length - 1) + " " + (toSend.length - 1));
+			DatagramPacket snd = new DatagramPacket(toSend, toSend.length, group, port);
+				socket.send(snd);
+		} catch (IOException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+			System.out.println("Failed to send message");
 		}
 	}
 	

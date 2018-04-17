@@ -70,43 +70,25 @@ public class SessionProtocol {
 	}
 
 	// encrypt plain text with AES
-	public byte[] encryptPlainText(byte[] plainText, SecretKey s) {
+	public byte[] encryptPlainText(byte[] plainText, SecretKey s) throws InvalidKeyException,  IllegalBlockSizeException, BadPaddingException{
 		byte[] encText = null;
-
-		try {
 			// initiate cipher
 			cipher.init(Cipher.ENCRYPT_MODE, s);
 
 			// encrypt plain text
 			encText = cipher.doFinal(plainText);
 
-		} catch (InvalidKeyException e) {
-			e.printStackTrace();
-		} catch (IllegalBlockSizeException e) {
-			e.printStackTrace();
-		} catch (BadPaddingException e) {
-			e.printStackTrace();
-		}
-
 		return encText;
 	}
 
-	public byte[] decryptPlainText(byte[] encText, SecretKey s) {
+	public byte[] decryptPlainText(byte[] encText, SecretKey s) throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
 		byte[] decText = null;
-		try {
 			// initiate cipher
 			cipher.init(Cipher.DECRYPT_MODE, s);
 
 			// decrypt text
 			decText = cipher.doFinal(encText);
 
-		} catch (InvalidKeyException e) {
-			e.printStackTrace();
-		} catch (IllegalBlockSizeException e) {
-			e.printStackTrace();
-		} catch (BadPaddingException e) {
-			e.printStackTrace();
-		}
 		return decText;
 	}
 
@@ -132,14 +114,19 @@ public class SessionProtocol {
 	}
 
 	public static void main(String[] args) {
+		try {
 		SessionProtocol sess = new SessionProtocol("hellogroup5");
 		String s = "hello world";
 		SecretKey sec = sess.generateSessionKey();
 		byte[] en = sess.encryptPlainText(s.getBytes(), sec);
 		System.out.println(new String(en));
-		byte[] de = sess.decryptPlainText(en, sec);
+		byte[] de;
+			de = sess.decryptPlainText(en, sec);
+
 		System.out.println(new String(de));
-		
+		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+			e.printStackTrace();
+		}
 	}
 
 }
