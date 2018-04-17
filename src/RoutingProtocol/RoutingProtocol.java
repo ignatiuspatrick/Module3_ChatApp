@@ -39,7 +39,7 @@ public class RoutingProtocol implements Runnable {
 	private Map<Byte, Byte[]> users;
 	private Map<Byte, Byte> pingmap;
 	private Map<Byte, Boolean> ackmap;
-
+	
 	public RoutingProtocol(FileTransferProtocol f, byte i, String pass, String n) throws IOException {
 		file = f;
 		name = n.getBytes();
@@ -87,7 +87,7 @@ public class RoutingProtocol implements Runnable {
 				//System.out.println("Receiver length: " + recb.length);
 				//System.out.println("message received!");
 				try {
-					drev = sess.decryptPlainText(drev, sess.getAuthKey());
+					drev = sess.decryptPlainText(drev, sess.getSecretkey());
 					
 				} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
 					System.out.println("Failed to decrypt messages");
@@ -340,7 +340,7 @@ public class RoutingProtocol implements Runnable {
 			byte[] encrypted = new byte[out.length + password.length];
 			System.arraycopy(password, 0, encrypted, 0, password.length);
 			System.arraycopy(out, 0, encrypted, password.length, out.length);
-			encrypted = sess.encryptPlainText(encrypted, sess.getAuthKey());
+			encrypted = sess.encryptPlainText(encrypted, sess.getSecretkey());
 			byte[] toSend = new byte[encrypted.length + 1];
 			toSend[0] = (byte) (toSend.length - 1);
 			System.arraycopy(encrypted, 0, toSend, 1 , encrypted.length);

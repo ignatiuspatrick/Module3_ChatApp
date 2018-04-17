@@ -32,7 +32,7 @@ public class SessionProtocol {
 		}
 	}
 
-	public SecretKeySpec getAuthKey() {
+	public SecretKeySpec getSecretkey() {
 		return this.authKey;
 	}
 
