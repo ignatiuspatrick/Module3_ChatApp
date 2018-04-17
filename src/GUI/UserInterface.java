@@ -14,11 +14,19 @@ import javax.swing.text.html.*;
 import java.util.Observable;
 import java.util.Observer;
 import RoutingProtocol.Message;
+import GUI.Startup;
+
+/*
+ * This class handles the user interface of the chat application
+ */
 
 public class UserInterface implements Observer {
 	private final JTextPane jtextFilDiscu = new JTextPane();
 	private final JTextPane jtextListUsers = new JTextPane();
 	private final JTextArea jtextInputChat = new JTextArea();
+	private final JButton jsbtn = new JButton("Send");
+	private final JButton jsbtndeco = new JButton("Disconnect");
+	private final JScrollPane jtextInputChatSP = new JScrollPane(jtextInputChat);
 	private String oldMsg = "";
 	private Thread read;
 	private String serverName;
@@ -32,6 +40,7 @@ public class UserInterface implements Observer {
 
 	// ------------Login page interface--------------
 
+	// constructor
 	public UserInterface(Startup s) {
 		this.start = s;
 		this.serverName = "Group5";
@@ -39,17 +48,19 @@ public class UserInterface implements Observer {
 		this.name = "Enter Name";
 		this.password = "Enter Password";
 
+		// font and size of the text in the interface
 		String fontfamily = "Arial, sans-serif";
 		Font font = new Font(fontfamily, Font.PLAIN, 24);
 		Font msgfont = new Font(fontfamily, Font.PLAIN, 28);
 
+		// chat application main frame
 		final JFrame jfr = new JFrame("Chat");
 		jfr.getContentPane().setLayout(null);
 		jfr.setSize(1300, 900);
 		jfr.setResizable(false);
 		jfr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		// Module chat area
+		// chat area box
 		jtextFilDiscu.setBounds(390, 25, 892, 520);
 		jtextFilDiscu.setFont(font);
 		jtextFilDiscu.setMargin(new Insets(6, 6, 6, 6));
@@ -60,7 +71,7 @@ public class UserInterface implements Observer {
 		jtextFilDiscu.setContentType("text/html");
 		jtextFilDiscu.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
 
-		// Module of list of users
+		// list of users box
 		jtextListUsers.setBounds(25, 25, 356, 520);
 		jtextListUsers.setFont(font);
 		jtextListUsers.setMargin(new Insets(6, 6, 6, 6));
@@ -84,7 +95,7 @@ public class UserInterface implements Observer {
 		jtfAddr.getDocument().addDocumentListener(new TextListener(jtfName, jtfport, jtfAddr, jtfpassword, jcbtn));
 		jtfpassword.getDocument().addDocumentListener(new TextListener(jtfName, jtfport, jtfAddr, jtfpassword, jcbtn));
 
-		// position of Modules
+		// position of all the boxes
 		jcbtn.setFont(font);
 		jtfAddr.setFont(font);
 		jtfName.setFont(font);
@@ -109,62 +120,44 @@ public class UserInterface implements Observer {
 		jfr.add(jtfAddr);
 		jfr.add(jtfpassword);
 		jfr.setVisible(true);
-
-		// info of chat application
-		appendToPane(jtextFilDiscu, "<h2><b>WELCOME TO GROUP 5 CHAT</b></h2>");
-
-		// -------------Interface after connection established-------------
-
-		// Field message user input
-		jtextInputChat.setBounds(0, 580, 1255, 100);
-		jtextInputChat.setFont(msgfont);
-		jtextInputChat.setMargin(new Insets(6, 6, 6, 6));
-		jtextInputChat.setLineWrap(true);
-		jtextInputChat.setWrapStyleWord(true);
-		final JScrollPane jtextInputChatSP = new JScrollPane(jtextInputChat);
-		jtextInputChatSP.setBounds(25, 580, 1255, 100);
-		jtextInputChatSP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-		jtextInputChatSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-		// button send
-		final JButton jsbtn = new JButton("Send");
-		jsbtn.setFont(font);
-		jsbtn.setBounds(975, 700, 300, 80);
-
-		// button Disconnect
-		final JButton jsbtndeco = new JButton("Disconnect");
-		jsbtndeco.setFont(font);
-		jsbtndeco.setBounds(25, 700, 300, 80);
-
-		jtextInputChat.addKeyListener(new KeyAdapter() {
-			// send message on Enter
+		
+		// connect if user presses enter after entering password
+		jtfpassword.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					sendMessage();
-				}
-
-				// Get last message typed
-				if (e.getKeyCode() == KeyEvent.VK_UP) {
-					String currentMessage = jtextInputChat.getText().trim();
-					jtextInputChat.setText(oldMsg);
-					oldMsg = currentMessage;
-				}
-
-				if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-					String currentMessage = jtextInputChat.getText().trim();
-					jtextInputChat.setText(oldMsg);
-					oldMsg = currentMessage;
+					name = jtfName.getText();
+					String port = jtfport.getText();
+					serverName = jtfAddr.getText();
+					PORT = Integer.parseInt(port);
+					password = jtfpassword.getText();
+	
+					appendToPane(jtextFilDiscu,"<span>Connecting to " + serverName + " with computer number " + PORT + "...</span>");
+					if (start.passValid(password)) {
+						appendToPane(jtextFilDiscu,"<span>Connected to group 5</span>");
+						appendToPane(jtextListUsers, userHeader);
+						start.Connect((byte)PORT, password, name);
+						jfr.remove(jtfName);
+						jfr.remove(jtfport);
+						jfr.remove(jtfAddr);
+						jfr.remove(jcbtn);
+						jfr.remove(jtfpassword);
+						jfr.add(jsbtn);
+						jfr.add(jtextInputChatSP);
+						jfr.add(jsbtndeco);
+						jfr.revalidate();
+						jfr.repaint();
+						jtextFilDiscu.setBackground(Color.WHITE);
+						jtextListUsers.setBackground(Color.WHITE);
+					} else {
+						appendToPane(jtextFilDiscu, "<span>Could not connect to Server</span>");
+						JOptionPane.showMessageDialog(jfr, "Incorrect Password");
+					}
+				} else if(e.getKeyCode() == KeyEvent.VK_UP) {
+					
 				}
 			}
 		});
-
-		// Click on send button
-		jsbtn.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent ae) {
-				sendMessage();
-			}
-		});
-
+		
 		// when connect button is pressed
 		jcbtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
@@ -193,12 +186,69 @@ public class UserInterface implements Observer {
 						jtextFilDiscu.setBackground(Color.WHITE);
 						jtextListUsers.setBackground(Color.WHITE);
 					} else {
-						appendToPane(jtextFilDiscu, "<span>Could not connect to Server because</span>");
+						appendToPane(jtextFilDiscu, "<span>Could not connect to Server</span>");
 						JOptionPane.showMessageDialog(jfr, "Incorrect Password");
 					}
 
 			}
 
+		});
+
+		// info of chat application
+		appendToPane(jtextFilDiscu, "<h2><b>WELCOME TO GROUP 5 CHAT</b></h2>");
+
+		// -------------Interface after connection established-------------
+
+		// Field message box (user input)
+		jtextInputChat.setBounds(0, 580, 1255, 100);
+		jtextInputChat.setFont(msgfont);
+		jtextInputChat.setMargin(new Insets(6, 6, 6, 6));
+		jtextInputChat.setLineWrap(true);
+		jtextInputChat.setWrapStyleWord(true);
+		JFrame f = new JFrame();
+		f.getContentPane().add(jtextInputChatSP);
+		jtextInputChatSP.setBounds(25, 580, 1255, 100);
+		jtextInputChatSP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+		jtextInputChatSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+		// button send
+		jsbtn.setFont(font);
+		jsbtn.setBounds(975, 700, 300, 80);
+
+		// button Disconnect
+		jsbtndeco.setFont(font);
+		jsbtndeco.setBounds(25, 700, 300, 80);
+
+		// actions performed according to key presses in the user input box
+		jtextInputChat.addKeyListener(new KeyAdapter() {
+			
+			// send message on Enter
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					sendMessage();
+				}
+
+				// Get last message pressed
+				if (e.getKeyCode() == KeyEvent.VK_UP) {
+					String currentMessage = jtextInputChat.getText().trim();
+					jtextInputChat.setText(oldMsg);
+					oldMsg = currentMessage;
+				}
+
+				// get last message typed even when down key pressed
+				if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+					String currentMessage = jtextInputChat.getText().trim();
+					jtextInputChat.setText(oldMsg);
+					oldMsg = currentMessage;
+				}
+			}
+		});
+
+		// Click on send button
+		jsbtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				sendMessage();
+			}
 		});
 
 		// when disconnect button is pressed
@@ -288,20 +338,30 @@ public class UserInterface implements Observer {
 		jtextInputChat.setText(null);
 		Thread t = new Thread(new sendThread(start, message));
 		t.start();
+		
+		// append own message also to the discussion pane
 		appendToPane(jtextFilDiscu, "<span>" + "<b>Me</b>" + ":" + message.toString()+ "</span>");
 	}
 
+	// listen for new messages from the other layer
 	@Override
 	public void update(Observable arg0, Object obj) {
 		System.out.println("Message received");
+		
+		// if message is not a list, add it to the discussion pane with the username of the person sent in bold
 		if (obj instanceof Message) {
 			Message m = (Message) obj;
 			String name = m.toString().split(":")[0];
 			appendToPane(jtextFilDiscu, "<span>" + "<b>" + name + "</b>" + ":" + m.toString().split(":")[1] + "</span>");
 			System.out.println(m.toString());
 		}
+		
+		// is received message is a list, append it to the users online pane
 		if (obj instanceof Object[]) {
+			
+			// first remove the list already in pane to avoid duplication 
 			jtextListUsers.setText(userHeader);
+			
 			for (Object p: (Object[]) obj) {
 				appendToPane(jtextListUsers, "<span>" + (String) p + "</span>");
 			}
@@ -309,6 +369,7 @@ public class UserInterface implements Observer {
 		}
 	}
 	
+	// create a new thread
 	public class sendThread implements Runnable  {
 
 		private Startup start;
