@@ -3,7 +3,7 @@ package RoutingProtocol;
 public class PingThread implements Runnable {
 
 	private final RoutingProtocol routing;
-
+	
 	public PingThread(RoutingProtocol p) {
 		routing = p;
 	}
@@ -14,9 +14,9 @@ public class PingThread implements Runnable {
 			routing.pingTick();
 			routing.sendPing();
 			try {
-				Thread.sleep(500);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				break;
 			}
 		}
 	}

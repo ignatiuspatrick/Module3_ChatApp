@@ -40,6 +40,7 @@ public class RoutingProtocol implements Runnable {
 	private Map<Byte, Byte> pingmap;
 	private Map<Byte, Boolean> ackmap;
 	private boolean running = true;
+	private final Thread ping;
 	
 	public RoutingProtocol(FileTransferProtocol f, byte i, String pass, String n) throws IOException {
 		file = f;
@@ -55,20 +56,18 @@ public class RoutingProtocol implements Runnable {
 		socket.joinGroup(group);
 		Thread t = new Thread(this);
 		t.start();
-		Thread ping = new Thread(new PingThread(this));
+		ping = new Thread(new PingThread(this));
 		ping.start();
 	}
 	
 	public void close() {
 		socket.close();
 		running = false;
+		ping.interrupt();
 	}
 
 	public void run() {
 		while (true) {
-			if (running == false) {
-				break;
-			}
 			byte[] buf = new byte[1000];
 			byte[] recb = new byte[5];
 			byte[] drev = new byte[5];
@@ -79,9 +78,6 @@ public class RoutingProtocol implements Runnable {
 				try {
 					socket.receive(rec);
 				} catch (IOException e) {
-					if (running == false) {
-						break;
-					}
 					try {
 						socket = new MulticastSocket(port);
 					} catch (IOException e1) {
@@ -89,6 +85,9 @@ public class RoutingProtocol implements Runnable {
 						flag = true;
 						continue;
 					}
+				}
+				if (!running) {
+					break;
 				}
 				byte[] temp = rec.getData();
 				drev = new byte[temp[0]];
@@ -131,8 +130,13 @@ public class RoutingProtocol implements Runnable {
 				}
 				//System.out.println(recb[0]);
 			} while (recb[0] == id || flag == true);
+			if (!running) {
+				break;
+			}
 			// Ping from other computers.
 			if (recb[3] == -2) {
+				//System.out.println(id + " " + recb[0] + " " + recb[1]);
+			
 				if (!users.containsKey(recb[0]) || !pingmap.containsKey(recb[0])) {
 					users.put(recb[0], new Byte[] { recb[1], recb[2], -1 });
 					relayMessage(recb);
@@ -194,7 +198,7 @@ public class RoutingProtocol implements Runnable {
 		System.arraycopy(recb, HEADER_LENGTH, plaintext, 0, payloadlength);
 		plaintext = sess.decryptPlainText(plaintext, new SecretKeySpec(sessionKey, "AES"));
 		file.receiveMessage(recb[0], plaintext);
-		System.out.println(new String(plaintext));
+		//System.out.println(new String(plaintext));
 		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
 			System.out.println("Failed to decrypt incoming payload");
 			e.printStackTrace();
@@ -301,7 +305,7 @@ public class RoutingProtocol implements Runnable {
 	}
 
 	// used by upper layer to send messages.
-	public void outMessage(byte[] message) {
+	public synchronized void outMessage(byte[] message) {
 		lock.lock();
 		try {
 			SecretKey s = sess.generateSessionKey(); // generate session key

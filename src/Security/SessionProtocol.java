@@ -73,7 +73,6 @@ public class SessionProtocol {
 	public byte[] encryptPlainText(byte[] plainText, SecretKey s) throws InvalidKeyException,  IllegalBlockSizeException, BadPaddingException{
 		byte[] encText = null;
 			// initiate cipher
-		System.out.println(new String(plainText));
 			cipher.init(Cipher.ENCRYPT_MODE, s);
 
 			// encrypt plain text
@@ -82,7 +81,7 @@ public class SessionProtocol {
 		return encText;
 	}
 
-	public byte[] decryptPlainText(byte[] encText, SecretKey s) throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
+	public byte[] decryptPlainText(byte[] encText, SecretKey s) throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException, ArrayIndexOutOfBoundsException {
 		byte[] decText = null;
 			// initiate cipher
 			cipher.init(Cipher.DECRYPT_MODE, s);
