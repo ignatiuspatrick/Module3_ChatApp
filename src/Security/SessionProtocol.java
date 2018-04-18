@@ -70,63 +70,28 @@ public class SessionProtocol {
 	}
 
 	// encrypt plain text with AES
-	public byte[] encryptPlainText(byte[] plainText, SecretKey s) throws InvalidKeyException,  IllegalBlockSizeException, BadPaddingException{
+	public byte[] encryptPlainText(byte[] plainText, SecretKey s)
+			throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 		byte[] encText = null;
+
 			// initiate cipher
 			cipher.init(Cipher.ENCRYPT_MODE, s);
 
-			// encrypt plain text
-			encText = cipher.doFinal(plainText);
+		// encrypt plain text
+		encText = cipher.doFinal(plainText);
 
 		return encText;
 	}
 
 	public byte[] decryptPlainText(byte[] encText, SecretKey s) throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException, ArrayIndexOutOfBoundsException {
 		byte[] decText = null;
-			// initiate cipher
-			cipher.init(Cipher.DECRYPT_MODE, s);
+		// initiate cipher
+		cipher.init(Cipher.DECRYPT_MODE, s);
 
-			// decrypt text
-			decText = cipher.doFinal(encText);
+		// decrypt text
+		decText = cipher.doFinal(encText);
 
 		return decText;
-	}
-
-	public byte[] generateMAC(byte[] encText) {
-		return null;
-	}
-
-	public boolean compareMAC(byte[] mac1, byte[] mac2) {
-		return false;
-	}
-
-	public static String asHex(byte buf[]) {
-		StringBuffer strbuf = new StringBuffer(buf.length * 2);
-		int i;
-
-		for (i = 0; i < buf.length; i++) {
-			if (((int) buf[i] & 0xff) < 0x10)
-				strbuf.append("0");
-
-			strbuf.append(Long.toString((int) buf[i] & 0xff, 16));
-		}
-		return strbuf.toString();
-	}
-
-	public static void main(String[] args) {
-		try {
-		SessionProtocol sess = new SessionProtocol("hellogroup5");
-		String s = "hello world";
-		SecretKey sec = sess.generateSessionKey();
-		byte[] en = sess.encryptPlainText(s.getBytes(), sec);
-		System.out.println(new String(en));
-		byte[] de;
-			de = sess.decryptPlainText(en, sec);
-
-		System.out.println(new String(de));
-		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
-			e.printStackTrace();
-		}
 	}
 
 }
