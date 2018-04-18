@@ -61,17 +61,19 @@ public class RoutingProtocol implements Runnable {
 	}
 	
 	public void close() {
-		socket.close();
-		running = false;
 		ping.interrupt();
+		running = false;
+		socket.close();
 	}
 
+	// Listen for incoming messages
 	public void run() {
 		while (true) {
 			byte[] buf = new byte[1000];
 			byte[] recb = new byte[5];
 			byte[] drev = new byte[5];
 			boolean flag;
+			// Receive message
 			DatagramPacket rec = new DatagramPacket(buf, buf.length);
 			do {
 				flag = false;
@@ -92,9 +94,8 @@ public class RoutingProtocol implements Runnable {
 				byte[] temp = rec.getData();
 				drev = new byte[temp[0]];
 				System.arraycopy(temp, 1, drev, 0, temp[0]);;
-				//System.out.println(new String(recb));
-				//System.out.println("Receiver length: " + recb.length);
-				//System.out.println("message received!");
+				
+				// decrypt with authKey
 				try {
 					drev = sess.decryptPlainText(drev, sess.getSecretkey());
 					
@@ -102,8 +103,9 @@ public class RoutingProtocol implements Runnable {
 					System.out.println("Failed to decrypt message");
 					flag = true;
 					continue;
-				} // decrypt with authKey
+				} 
 				
+				// Check if pass is correct
 				for (int c = 0; c < password.length; c++) {
 					try {
 						if (drev[c] != password[c]) {
@@ -121,6 +123,7 @@ public class RoutingProtocol implements Runnable {
 					continue;
 				}
 				
+				// Put Message in new byte array
 				if (drev[password.length + 3] == -1) {
 					recb = new byte[HEADER_LENGTH + drev[password.length + 5] + 16];
 					System.arraycopy(drev, password.length, recb, 0, HEADER_LENGTH + drev[password.length + 5] + 16);
@@ -128,15 +131,12 @@ public class RoutingProtocol implements Runnable {
 					recb = new byte[HEADER_LENGTH + drev[password.length + 5]];
 					System.arraycopy(drev, password.length, recb, 0, HEADER_LENGTH + drev[password.length + 5]);
 				}
-				//System.out.println(recb[0]);
 			} while (recb[0] == id || flag == true);
 			if (!running) {
 				break;
 			}
 			// Ping from other computers.
-			if (recb[3] == -2) {
-				//System.out.println(id + " " + recb[0] + " " + recb[1]);
-			
+			if (recb[3] == -2) {	
 				if (!users.containsKey(recb[0]) || !pingmap.containsKey(recb[0])) {
 					users.put(recb[0], new Byte[] { recb[1], recb[2], -1 });
 					relayMessage(recb);
@@ -155,10 +155,6 @@ public class RoutingProtocol implements Runnable {
 
 			// Normal messages.
 			if (recb[3] == -1) {
-				//if (users.containsKey(recb[0])) {
-				//	System.out.println(pingmap.containsKey(recb[0]) + " " + (users.get(recb[0])[0] + 1) % 100 + " "
-				//			+ recb[1] % 100);
-				//}
 				if ((pingmap.containsKey(recb[0]) && (users.get(recb[0])[0] + 1) % 100 == recb[1] % 100)) {
 					receiveMessage(recb);
 				}
@@ -198,26 +194,13 @@ public class RoutingProtocol implements Runnable {
 		System.arraycopy(recb, HEADER_LENGTH, plaintext, 0, payloadlength);
 		plaintext = sess.decryptPlainText(plaintext, new SecretKeySpec(sessionKey, "AES"));
 		file.receiveMessage(recb[0], plaintext);
-		//System.out.println(new String(plaintext));
 		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
 			System.out.println("Failed to decrypt incoming payload");
 			e.printStackTrace();
 		}
-		/*
-		System.out.println("message received!");
-		recb = sess.decryptPlainText(recb, sess.getAuthKey()); // decrypt with authKey
-		byte[] header = new byte[HEADER_LENGTH];
-		System.arraycopy(recb, 0, header, 0, HEADER_LENGTH);
-		int payloadlength = (int) header[5];
-		byte[] sessionKey = new byte[recb.length - HEADER_LENGTH - payloadlength];
-		System.arraycopy(recb, HEADER_LENGTH + payloadlength + 1, sessionKey, 0, HEADER_LENGTH - payloadlength);
-		byte[] plaintext = new byte[payloadlength];
-		System.arraycopy(recb, HEADER_LENGTH + 1, plaintext, 0, payloadlength);
-		plaintext = sess.decryptPlainText(plaintext, new SecretKeySpec(sessionKey, "AES"));
-		
-		*/
 	}
 
+	// Relay messages to next nodes
 	public void relayMessage(byte[] message) {
 		Byte[] bts = users.get(message[0]);
 		bts[0] = message[1];
@@ -235,6 +218,7 @@ public class RoutingProtocol implements Runnable {
 
 	
 	private int updatecounter = 0;
+	
 	// Tick for the computers that we expect acks from.
 	public void pingTick() {
 		lock.lock();
@@ -271,7 +255,7 @@ public class RoutingProtocol implements Runnable {
 		return seq;
 	}
 
-	// to the next sequence number
+	// to the next special sequence number
 	public byte nextSpecSeq() {
 		specseq++;
 		if (specseq == 100) {
@@ -280,7 +264,7 @@ public class RoutingProtocol implements Runnable {
 		return specseq;
 	}
 
-	// send acks for received messages.
+	// Send acks for received messages.
 	public void sendAck(byte ack, byte ackid) {
 		lock.lock();
 		try {
@@ -291,6 +275,7 @@ public class RoutingProtocol implements Runnable {
 		}
 	}
 
+	// Send a ping to let other nodes know our name
 	public void sendPing() {
 		lock.lock();
 		try {
@@ -315,8 +300,6 @@ public class RoutingProtocol implements Runnable {
 			System.arraycopy(b, 0, out, 0, b.length);
 			System.arraycopy(message, 0, out, b.length, message.length);
 			System.arraycopy(s.getEncoded(), 0, out, b.length + message.length, s.getEncoded().length);
-			//byte[] toSend = sess.encryptPlainText(out, sess.getAuthKey()); // encrypt
-			//DatagramPacket snd = new DatagramPacket(out, out.length, group, port);
 			ackmap = new HashMap<>();
 			for (Byte host : pingmap.keySet()) {
 				ackmap.put(host, false);
@@ -344,7 +327,6 @@ public class RoutingProtocol implements Runnable {
 				System.out.println("resending");
 				re++;
 				out[2] = re;
-				//snd = new DatagramPacket(newsnd, newsnd.length, group, port);
 			}
 
 		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e1) {
@@ -354,9 +336,9 @@ public class RoutingProtocol implements Runnable {
 		}
 	}
 
+	// Encrypt message before sending
 	public void Send(byte[] out) {
 		try {
-			//System.out.println("Non encrypted: " + new String(out));
 			byte[] encrypted = new byte[out.length + password.length];
 			System.arraycopy(password, 0, encrypted, 0, password.length);
 			System.arraycopy(out, 0, encrypted, password.length, out.length);
@@ -364,7 +346,6 @@ public class RoutingProtocol implements Runnable {
 			byte[] toSend = new byte[encrypted.length + 1];
 			toSend[0] = (byte) (toSend.length - 1);
 			System.arraycopy(encrypted, 0, toSend, 1 , encrypted.length);
-			//System.out.println("encrypted: " + (byte) (toSend.length - 1) + " " + (toSend.length - 1));
 			DatagramPacket snd = new DatagramPacket(toSend, toSend.length, group, port);
 				socket.send(snd);
 		} catch (IOException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {

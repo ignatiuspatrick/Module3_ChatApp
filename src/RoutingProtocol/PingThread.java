@@ -8,6 +8,7 @@ public class PingThread implements Runnable {
 		routing = p;
 	}
 
+	//Ping every second
 	@Override
 	public void run() {
 		while (true) {

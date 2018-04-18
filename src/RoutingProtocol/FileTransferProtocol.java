@@ -25,14 +25,8 @@ public class FileTransferProtocol extends Observable {
 			e.printStackTrace();
 		}
 	}
-	
-	public void scan() {
-		while (true) {
-			Scanner scan = new Scanner(System.in);
-			sendMessage(scan.nextLine());
-		}
-	}
 
+	// Send a message to the RoutingProtocol
 	public void sendMessage(String message) {
 		Long timel = System.currentTimeMillis();
 		byte[] time = timel.toString().getBytes();
@@ -44,6 +38,7 @@ public class FileTransferProtocol extends Observable {
 		
 	}
 	
+	// Receive message from RoutingProtocol and send to ui
 	public void receiveMessage(byte id, byte[] message) {
 		byte[] time = new byte[TIME_LENGTH];
 		byte[] text = new byte[message.length - TIME_LENGTH];
@@ -57,15 +52,17 @@ public class FileTransferProtocol extends Observable {
 		notifyObservers(new Message(name, new Long(new String(time)), new String(text)));
 	}
 	
-	
+	// Update map with id and username
 	public void updateList(byte id, byte[] n) {
 		usernames.put(id, new String(n));
 	}
 	
+	// Get the RoutingProtocol
 	public RoutingProtocol getrouting() {
 		return routing;
 	}
 
+	// Send an update to the ui with the names of the currently connected nodes
 	public void sendUpdate(Set<Byte> ping) {
 		List<String> l = new ArrayList<>();
 		for (Byte b: ping) {

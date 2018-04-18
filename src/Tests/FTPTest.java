@@ -22,10 +22,16 @@ class FTPTest {
 		k = new MessageHolder();
 		file.addObserver(k);
 		file2.addObserver(h);
+
 	}
 
 	@Test
 	void NormalMessaging() {
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		assertTrue(h.getMessage() == null);
 		assertTrue(h.getMessage() == null);
 		try {
@@ -36,8 +42,9 @@ class FTPTest {
 		for (int i = 0; i < 1; i++) {
 			try {
 				file.sendMessage("Hello World " + i);
+				Thread.sleep(50);
 				file2.sendMessage("Hello World " + i);
-				Thread.sleep(100);
+				Thread.sleep(500);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -49,16 +56,18 @@ class FTPTest {
 			assertTrue(k.getMessage().toString().equals("aaa: Hello World " + i));
 			assertTrue(k.getMessage().getTime() <= System.currentTimeMillis());
 		}
+		file.getrouting().close();
+		file2.getrouting().close();
 	}
 	
 	@Test
 	void Reconnect() {
-		for (int k = 0; k < 10; k++) {
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			}
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+		for (int k = 0; k < 1; k++) {
 			for (int i = 0; i < 10; i++) {
 				file.sendMessage("Hello World");
 			}
@@ -87,6 +96,8 @@ class FTPTest {
 				e.printStackTrace();
 			}
 		}
+		file.getrouting().close();
+		file2.getrouting().close();
 	}
 
 }
