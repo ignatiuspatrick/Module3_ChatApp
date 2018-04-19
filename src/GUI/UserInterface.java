@@ -258,7 +258,6 @@ public class UserInterface implements Observer {
 				jfr.remove(jsbtndeco);
 				jfr.revalidate();
 				jfr.repaint();
-				read.interrupt();
 				jtextListUsers.setText(null);
 				jtextFilDiscu.setBackground(Color.LIGHT_GRAY);
 				jtextListUsers.setBackground(Color.LIGHT_GRAY);
